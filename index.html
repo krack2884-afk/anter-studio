@@ -25,7 +25,7 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--dark); 
 /* ═══════════════════════════════════════
    BOOT SCREEN
 ═══════════════════════════════════════ */
-#boot {
+#boot { display:none !important; /* DISABLED */ || #boot_DISABLED {
   position:fixed; inset:0; background:#000; display:flex; flex-direction:column;
   align-items:center; justify-content:center; z-index:9999;
   transition: opacity 0.8s;
@@ -39,7 +39,7 @@ html,body { width:100vw; height:100vh; overflow:hidden; background:var(--dark); 
 /* ═══════════════════════════════════════
    MAIN LAYOUT
 ═══════════════════════════════════════ */
-#app { display:none; width:100vw; height:100vh; flex-direction:column; }
+#app { display:flex; width:100vw; height:100vh; flex-direction:column; }
 
 /* TOP NAV */
 #topnav {
@@ -327,7 +327,7 @@ input[type=range] {
 ::-webkit-scrollbar-thumb { background:#222; border-radius:2px; }
 
 /* PERMISSION GRANT SCREEN */
-#perm-screen {
+#perm-screen { display:none !important; /* auto-skip */ || #perm_DISABLED {
   position:fixed; inset:0; background:#000; z-index:8888;
   display:none; flex-direction:column; align-items:center; justify-content:center;
   padding:40px; gap:24px;
