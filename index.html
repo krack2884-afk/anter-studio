@@ -21,10 +21,11 @@
   #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; }
   #no-cam { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:#333; font-size:0.8rem; letter-spacing:0.1em; }
 
-  #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; overflow-y:auto; }
-  #chooser h2 { color:var(--gold); font-size:1.2rem; letter-spacing:0.3em; margin-bottom:8px; }
-  .script-btn { width:100%; max-width:420px; background:#111; border:1px solid #2a2a2a; color:#ccc; padding:14px 18px; text-align:left; cursor:pointer; border-radius:6px; transition:all 0.2s; }
-  .script-btn:hover { border-color:var(--gold); color:#fff; }
+  #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px; overflow-y:auto; }
+  #chooser h2 { color:var(--gold); font-size:1.1rem; letter-spacing:0.3em; margin-bottom:4px; }
+  #chooser p { color:#444; font-size:0.7rem; letter-spacing:0.1em; margin-bottom:8px; }
+  .script-btn { width:100%; max-width:460px; background:#111; border:1px solid #2a2a2a; color:#ccc; padding:14px 18px; text-align:left; cursor:pointer; border-radius:6px; transition:all 0.2s; }
+  .script-btn:hover { border-color:var(--gold); color:#fff; background:#181818; }
   .script-btn .stitle { font-size:0.85rem; font-weight:700; color:var(--gold); }
   .script-btn .stype { font-size:0.7rem; color:#555; letter-spacing:0.1em; margin-top:2px; }
 
@@ -34,9 +35,9 @@
   #scroll-zone { flex:1; overflow:hidden; position:relative; padding:0 10%; }
   #fade-top { position:absolute; top:0; left:0; right:0; height:80px; background:linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index:2; pointer-events:none; }
   #fade-bot { position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index:2; pointer-events:none; }
-  #focus-line { position:absolute; top:50%; left:10%; right:10%; height:2px; background:rgba(201,168,76,0.2); pointer-events:none; z-index:3; }
-  #scroll-inner { padding:50vh 0; font-size:2rem; line-height:1.8; color:#fff; text-shadow:0 2px 20px rgba(0,0,0,0.8); white-space:pre-wrap; }
-  #twin-flame { margin-top:3rem; padding:1.5rem; border-left:3px solid var(--gold); color:rgba(201,168,76,0.8); font-style:italic; font-size:1.6rem; line-height:1.8; }
+  #focus-line { position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(201,168,76,0.15); pointer-events:none; z-index:3; }
+  #scroll-inner { padding:50vh 0; font-size:1.95rem; line-height:1.85; color:#fff; text-shadow:0 2px 20px rgba(0,0,0,0.8); white-space:pre-wrap; }
+  #twin-flame { margin-top:3rem; padding:1.5rem; border-left:3px solid var(--gold); color:rgba(201,168,76,0.8); font-style:italic; font-size:1.7rem; line-height:1.85; }
 
   #ctrl-bar { display:flex; align-items:center; gap:8px; padding:10px 16px; background:rgba(0,0,0,0.9); flex-shrink:0; }
   .ctrl { background:#111; border:1px solid #222; color:#ccc; padding:8px 14px; border-radius:4px; cursor:pointer; font-size:0.8rem; }
@@ -51,8 +52,8 @@
 
   #scripts-panel { padding:20px; overflow-y:auto; gap:16px; }
   .script-card { background:#111; border:1px solid #1e1e1e; border-radius:8px; padding:18px; margin-bottom:16px; }
-  .script-card h3 { color:var(--gold); font-size:0.9rem; letter-spacing:0.1em; margin-bottom:6px; }
-  .script-card p { color:#555; font-size:0.75rem; letter-spacing:0.05em; margin-bottom:12px; }
+  .script-card h3 { color:var(--gold); font-size:0.9rem; letter-spacing:0.1em; margin-bottom:4px; }
+  .script-card .stag { font-size:0.7rem; color:#555; letter-spacing:0.08em; margin-bottom:12px; }
   .script-card .load-btn { background:var(--gold); color:#000; border:none; padding:8px 18px; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:700; letter-spacing:0.1em; }
 
   #files-panel { padding:20px; gap:16px; overflow-y:auto; }
@@ -69,9 +70,9 @@
 
 <div id="nav">
   <div class="logo">ANTER</div>
-  <button class="tab active" onclick="switchTab('studio', this)">🎬 STUDIO</button>
-  <button class="tab" onclick="switchTab('scripts', this)">📋 SCRIPTS</button>
-  <button class="tab" onclick="switchTab('files', this)">📁 FILES</button>
+  <button class="tab active" onclick="switchTab('studio',this)">🎬 STUDIO</button>
+  <button class="tab" onclick="switchTab('scripts',this)">📋 SCRIPTS</button>
+  <button class="tab" onclick="switchTab('files',this)">📁 FILES</button>
   <div class="spacer"></div>
   <div id="rec-dot"></div>
 </div>
@@ -81,6 +82,7 @@
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
   <div id="chooser">
     <h2>SELECT YOUR SCRIPT</h2>
+    <p>TAP TO LOAD · HIT PLAY · FILM YOUR TRUTH</p>
     <div id="chooser-list"></div>
   </div>
   <div id="prompter">
@@ -110,6 +112,10 @@
   <p>Paste your API key from udioapi.pro to activate AI soundtrack generation.</p>
   <input id="api-key-input" type="password" placeholder="Paste your Udio API key here..." />
   <button class="save-btn" onclick="saveApiKey()">SAVE & ACTIVATE</button>
+  <div style="margin-top:28px;">
+    <h3 style="margin-bottom:8px;">📡 CHANNELS MONITORED</h3>
+    <p style="line-height:2;">Dark Motivation · Dark Smile Motivation · Dark Grit<br>Dark Force 2.0 · The Chosen Grim · Chosen In The Light</p>
+  </div>
 </div>
 
 <div id="notif"></div>
@@ -117,191 +123,295 @@
 <script>
 const scripts = [
   {
-    id:"S001", title:"I USED TO THINK SOMETHING WAS WRONG WITH ME", type:"Channel Intro — Who You're Talking To",
-    body:`I used to think something was wrong with me.
+    id:"S001",
+    title:"SOMETHING IN YOU WAS ALWAYS DIFFERENT",
+    type:"Channel Intro",
+    body:`I need to say something right off the top.
 
-Like — why do I feel everything so hard? Why can't I just let things go like other people seem to?
+If you've ever felt like you were built differently than the people around you — like you feel things at a depth most people don't even know exists — I want you to hear this:
 
-Someone would say something offhand at a family dinner and I'd be up at 2am still turning it over in my head. My wife would be upset and even if I didn't know why, I could feel it in my whole body before she said a word.
+That's not a malfunction.
 
-I thought that was a flaw. For a long time, I tried to turn it off.
+I used to think it was. I spent years trying to dial down the volume on what I was feeling — numbing it, running from it, doing whatever I could to feel like a normal person for five minutes.
 
-That's actually how I ended up where I ended up. The using, the chaos — a lot of that was me trying to find the off switch for something I didn't understand yet.
+What I didn't understand then, that I understand now, is that some of us came into this world wired for something specific. We feel more because we're supposed to. We absorb the room before we walk in. We know what someone needs before they ask. We love at a frequency most people have never experienced.
 
-What I know now is that there is no off switch. And I don't want one anymore.
+And because of that — we also get hit harder. The betrayal lands deeper. The disappointment doesn't just sting, it levels you. You don't just have a bad day — you carry it.
 
-Because that same thing that made me feel everything so intensely? It's also why I can sit with someone in their worst moment and they don't feel alone. It's why I can love people through things that most people would walk away from.
+I've been in that. All of it.
 
-I'm not broken. I'm built for something specific.
+But here's what changed for me — the moment I stopped trying to fit into a version of strength that was never designed for me, and started stepping into the one that was.
 
-And if you've ever felt what I'm describing — like you feel too much, like you care too hard, like you keep choosing love even when it costs you —
+That's what this channel is.
 
-You're not broken either.
+It's not therapy. It's not preaching. It's just me talking to the people who are carrying what I've carried — and showing you what it looks like when you stop fighting what you are and start walking in it.
 
-That's what this channel is. Me figuring out what it means to carry this thing with purpose instead of pain.
+If that's you — you're in the right place.
 
-I'm glad you're here.`,
-    twinFlame:`And to my wife — if you're watching this. You've seen every version of me. The one that was lost, the one that was trying, and this one right here. I meant what I said. I'm not going anywhere. I'm just finally becoming who I was supposed to be. And I want that for us. Both of us.`
+Let's go.`,
+    twinFlame:`And to my wife — this channel is part of what we're building. Even on the days it doesn't feel like it. I still believe in where we're going. I'm still here.`
   },
   {
-    id:"S002", title:"THE MOMENT I STOPPED TRYING TO WIN THE ARGUMENT", type:"Relationship — The Turning Point",
-    body:`There was this moment — and I remember exactly where I was standing in the house — where I realized I had been trying to win every single argument.
+    id:"S002",
+    title:"THE DAY I STOPPED REACTING AND EVERYTHING CHANGED",
+    type:"Relationship — The Turning Point",
+    body:`There was a moment — I remember exactly where I was standing — where I made a decision that changed the entire dynamic of my marriage.
 
-Not out loud necessarily. But in my head, I was keeping score. I was building my case. Collecting evidence. Waiting for her to finally see that I was right.
+My wife said something that hit me in a spot that used to guarantee a reaction. I felt it go through me. And for the first time, instead of firing back — I just got still.
 
-And it hit me one day — I have never once won an argument that way. Not really. Even the times I "won" — she'd go quiet, I'd feel this hollow thing in my chest, and we'd both just... go to our corners. Nothing actually got better.
+Not cold. Not checked out. Just... still.
 
-So I tried something different.
+I said, "I hear you. I'm not going to match that energy."
 
-I stopped trying to win. I stopped defending myself in real time. When she came at me with something that felt unfair, instead of firing back, I just got quiet. Not cold quiet. Not icing her out. Just — I took a breath and I said something like, "I hear you. I'm not going to fight about this."
+And walked out of the room.
 
-The first few times she didn't know what to do with that. Honestly, neither did I.
+No slamming. No last word. No building my case in the hallway.
 
-But over time something started to shift. Because when I stopped reacting, I stopped giving the conflict what it needed to keep going. And she started — slowly — to meet me somewhere different.
+She didn't know what to do with that. Honestly, neither did I.
 
-I'm not saying it fixed everything overnight. It didn't. We're still in the middle of it.
+But something in me understood — the person who stays calm in a storm isn't weak. They're the most powerful person in the room. Because they chose response over reaction. And that choice is everything.
 
-But I'll tell you this — the most powerful thing I've ever done in my marriage wasn't something I said.
+Here's what I've learned about people who are wired the way I am, the way maybe you are — we feel the conflict as a physical thing. It lives in our chest, our stomach. We want to resolve it immediately because carrying unresolved tension is almost unbearable for us.
 
-It was something I didn't say.
+But that urgency — that need to fix it right now — is exactly what gets used against us.
 
-That's what I'm talking about on this channel. The moves nobody teaches you.`,
+The move that changed my life was learning to let the storm pass without jumping into it.
+
+Not because I gave up. Because I was playing a longer game.
+
+And slowly — slowly — the dynamic started to shift.
+
+I'm not telling you it's easy. I'm telling you it's possible.
+
+And it starts with one moment of choosing stillness over reaction.
+
+That moment might be today.`,
     twinFlame:null
   },
   {
-    id:"S003", title:"MY MOM AND I BOTH ALMOST DIDN'T MAKE IT", type:"Testimony — Addiction & Survival",
-    body:`I've never said this on camera before.
+    id:"S003",
+    title:"WE ALMOST DIDN'T MAKE IT — ME AND MY MOM",
+    type:"Testimony — Addiction & Survival",
+    body:`I've been sitting on this one for a while.
 
-My mom and I — we both struggled with addiction. At the same time. Different substances, same war. And there were moments where I genuinely didn't know which one of us was going to make it.
+My mom and I — we both struggled with addiction at the same time. Same season. Different substances. Same war.
 
-I used to feel a lot of shame about that. Like I was supposed to be stronger. Like I should've had it together.
+There were moments where I genuinely didn't know if we were both going to come out the other side.
 
-What I understand now — and this took me a long time — is that both of us were feeling too much and had no language for it. We're both empaths. We absorb everything around us. And at some point, the weight of that gets so heavy that you start looking for anything that'll turn the volume down.
+For a long time I carried a lot of shame about that. Like I should've been stronger. Like I should've figured it out faster. Like the fact that we were both in it at the same time meant something was fundamentally broken in our family.
 
-I'm not making excuses. I'm telling you what was actually happening underneath it.
+What I understand now — and this took years — is that both of us were feeling things that we had no framework for. We're both wired to absorb the world around us at a depth that most people don't. And when you're doing that without any tools, without anyone telling you what you're even carrying — at some point the weight gets so heavy you start looking for anything that makes it lighter for a minute.
 
-Because there are people watching this right now who are in that same place. Numbing something they don't have words for yet. And they think the problem is them — their weakness, their character, their worth.
+That's what was underneath it for me. Not weakness. Overflow.
+
+I'm not making excuses. I'm telling the true story.
+
+Because there are people watching this right now who are in some version of that place. And they think the problem is them — their character, their worth, something unfixable at the core.
 
 It's not.
 
-You're not weak. You're overloaded. There's a difference.
+You're not broken. You're overloaded. And there's a difference.
 
-My mom and I are both still here. Both still in the work. And the fact that we went through that together — there's a strange kind of bond in that. She didn't judge me because she knew the pull firsthand.
+My mom and I are both still here. Both still in the work. And the fact that we went through it together — as painful as it was — forged something between us that nothing can touch.
 
-If you're in it right now — I'm not going to tell you it's easy to get out. But I'm going to tell you that who you are underneath the thing you're using to survive?
+If you're in it right now, I'm not going to tell you the way out is easy.
+
+But I'm going to tell you that who you are underneath the thing you're using to survive?
 
 That person is worth fighting for.
 
-I know because I almost lost him. And I'm really glad I didn't.`,
+I know because I almost lost him.
+
+And I'm really glad I didn't.`,
     twinFlame:null
   },
   {
-    id:"S004", title:"WHAT NOBODY TELLS YOU ABOUT LOVING SOMEONE WHO HURTS YOU", type:"Empath & Relationships — The Hard Truth",
-    body:`Nobody prepares you for what it's like to love someone who also hurts you.
+    id:"S004",
+    title:"NOBODY PREPARES YOU FOR LOVING SOMEONE LIKE THIS",
+    type:"Empath & Hard Love",
+    body:`Nobody tells you what it's actually like to love someone who also hurts you.
 
-Not in the movies. Not in church. Not in therapy — at least not right away.
+Not in any real way.
 
-Because the default answer when someone keeps hurting you is: leave. Set boundaries. Protect yourself.
+The world gives you two options — stay and suffer, or leave and be free. And if you're not doing one of those two things, people look at you like you're confused. Like you don't know what's good for you.
 
-And I'm not saying that's wrong. Sometimes it is the right call.
+But I think there's a third thing that nobody talks about.
 
-But for me — and I think for a lot of people who are wired the way I'm wired — it's not that simple. Because I can feel who she is underneath the patterns. I can feel the version of her that's fighting to get out. And walking away from that feels like abandoning someone in a burning building.
+There's a kind of love that sees through the behavior to the person underneath it. That can hold space for someone's brokenness without being destroyed by it. That chooses to stay — not out of fear, not out of weakness — but out of something that feels more like a calling than a choice.
 
-So what do you do with that?
+That's a hard place to live.
 
-What I've had to learn — the hard way, over and over — is that I can stay AND have a spine.
+Because on the outside it can look like you're being walked on. And on the inside you're doing the most complex emotional work a human being can do — staying present, staying grounded, staying whole — while someone else is actively struggling.
 
-I can love her fully and still refuse to absorb the hit. I can be present and still be grounded. I can stay committed to the marriage AND committed to not losing myself in it.
+I've been doing that work for years.
 
-That balance is the hardest thing I've ever tried to do.
+Some days I do it well. Some days I fall back into old patterns — reacting, defending, losing the ground I worked so hard to gain.
 
-Some days I nail it. Some days I fall back into the old pattern — reacting, defending, shrinking.
+But I keep coming back to this:
 
-But here's what I keep coming back to: the fact that I can feel her pain without becoming it — that's not weakness. That's actually the thing that gives me the best shot at helping her through it.
+The fact that I can feel her pain without becoming it — that's not a weakness. That's the most useful thing I have.
 
-I'm not her therapist. I'm her husband.
+I'm not her therapist. I'm her husband. And I can choose to be the steady thing when she can't be.
 
-But I can choose to be steady when she can't be. Not because I'm a pushover — because I've decided that's who I want to be.
+Not as a performance. Not to prove anything. But because that's who I decided I was going to be.
 
-That decision changed everything.`,
-    twinFlame:`Baby — I know you're fighting your own war inside. I see it. I'm not leaving. I'm just learning how to love you better. That's all this is.`
+And that decision — made quietly, in private, over and over again — is the thing that's slowly changing everything.
+
+If you're doing that same work in your own life — I see you.
+
+Keep going.`,
+    twinFlame:`Baby — this one is for you too. Not as pressure. Just as a reminder. I see who you are underneath all of it. And I'm not going anywhere.`
   },
   {
-    id:"S005", title:"LETTER TO MY MOTHER", type:"Personal — Mama's Video",
+    id:"S005",
+    title:"LETTER TO MY MOTHER",
+    type:"Personal — Mama's Video",
     body:`Mom.
 
-I've been sitting with this for a while trying to figure out how to say it right.
+I've been trying to find the right words for this for a long time.
 
-So I'm just going to say it.
+So I'm just going to say it plainly.
 
-You were not my enabler. I know that's what people called it. I know you've probably called yourself that in your own head more times than I can count.
+You are not my enabler.
 
-But that's not what you were.
+I know that's what it looked like from the outside. I know it might even be what you've told yourself in the dark at 3am. But it's not true, and I need you to hear me say that on camera so you can't talk yourself out of believing it.
 
-You were a woman who watched her son disappearing and refused to let go. You caught me every time. Not because you were weak — because you loved me in a way that didn't know how to give up.
+You were a woman who watched her son disappearing and refused — in every way that love knows how — to let him go.
 
-And here's what I haven't said out loud before:
+You caught me every single time.
 
-You were fighting your own version of the same battle. We both were. Two people in the same bloodline, feeling everything too deeply and not knowing what to do with it.
+Not because you were weak. Because your love didn't know how to give up on me. And I will be grateful for that for the rest of my life.
 
-That's not something to be ashamed of. That's something I think God put us through together so we could come out the other side with something real to say.
+Here's the thing I've never said out loud before:
 
-I need you to stop carrying the guilt. I need you to put it down.
+We were in the same battle. Different versions of it. Two people in the same bloodline, both feeling the weight of the world in a way most people around us never could. Both trying to survive something that had no name.
 
-Because the version of me that's standing here right now — the one that's healing, the one that's building something, the one who still calls you first when something big happens — he exists because of you. Not despite you.
+That's not something to be ashamed of. That's our shared story. And we're still here to tell it.
+
+What I need from you now — and I need you to actually receive this — is for you to put down the guilt.
+
+Not minimize what happened. Not pretend it didn't hurt. Just — stop carrying the weight of something that was never a character flaw. It was a wound. And wounds heal.
+
+The man standing here right now — the one who's building something, who still calls you first — he exists because of you. Every version of you. Even the messy ones.
 
 I just need a little more time. A little more patience.
 
-I know you're tired. I know you've been holding your breath for years waiting for the other shoe to drop.
+Hold on a little longer.
 
-I'm telling you — you can exhale.
+We're both going to make it out of this.
 
-I'm going to be okay.
+I love you more than I know how to say.
 
-We're both going to be okay.
-
-I love you, Mom. More than I know how to say.`,
+Your son. Tyler.`,
     twinFlame:null
+  },
+  {
+    id:"S006",
+    title:"YOU'VE BEEN MISREAD YOUR WHOLE LIFE",
+    type:"Identity — Who You Actually Are",
+    body:`Can I tell you something that might hit different than you expect?
+
+You have probably been misread your whole life.
+
+Not because you're complicated. Because you operate at a register that most people don't have access to.
+
+You walk into a room and you already know things. You pick up tension before it has a name. You feel the weight of what's unsaid. You care about people in a way that costs you something real.
+
+And what people do with that — when they don't understand it — is try to reduce it.
+
+Too sensitive. Too intense. Too much.
+
+Or they use it. They figure out that you'll absorb more than your share. That you'll stay when others leave. That you'll find a way to make their discomfort your responsibility.
+
+And because you're built the way you are, you let them. Not out of stupidity — out of depth.
+
+Here's what I want you to understand.
+
+What you carry is not ordinary.
+
+The fact that you can be in the hardest seasons of your life and still choose love — that's not something everyone can do. Most people can't. They don't have the capacity for it.
+
+You do.
+
+That's not weakness. That's a kind of strength the world doesn't have language for yet.
+
+But here's the part that nobody tells you:
+
+Strength like that needs protecting. Needs boundaries. Needs to know when to be given and when to be guarded.
+
+Because you being drained helps nobody.
+
+You whole — you full — you operating from a place of peace instead of survival — that version of you?
+
+That's the one that actually changes people.
+
+So stop apologizing for what you feel.
+
+Start protecting it.`,
+    twinFlame:null
+  },
+  {
+    id:"S007",
+    title:"I STOPPED TRYING TO SAVE MY MARRIAGE AND THAT'S WHEN IT STARTED HEALING",
+    type:"Spiritual Pivot",
+    body:`This one might be the most honest thing I've ever said on camera.
+
+There was a period where I was so focused on saving my marriage that I was losing myself in the process.
+
+Every conversation was a strategy. Every moment of quiet was an opportunity to fix something. I was pouring everything I had into trying to pull us back from the edge — and the more I pushed, the further away it felt.
+
+And then something shifted.
+
+I don't know if I can explain it perfectly. But I stopped trying to save the marriage and started trying to become the man I was supposed to be — inside the marriage, inside the hard parts, inside the friction.
+
+Not as a tactic. Not to make her respond differently.
+
+Just because it was the right thing to do for me, before God, regardless of the outcome.
+
+And something remarkable started to happen.
+
+When I stopped trying to control the outcome — when I let go of the result and just focused on who I was being — the pressure left the room. And when the pressure left... she had space to breathe. I had space to breathe.
+
+I'm not saying we're all the way there. We're still in the middle of the story.
+
+But the shift happened when I made a decision in private that I was going to choose integrity over reaction, love over pride, patience over urgency — not for the result, but for the assignment.
+
+Because here's what I believe: some of us are placed in hard situations not because we did something wrong, but because we're exactly the kind of person who can handle it without becoming it.
+
+That's a weight worth carrying.
+
+But only if you carry it right.`,
+    twinFlame:`To my wife — I'm not the man I was. And I'm not yet the man I'm becoming. But I am here. Present. Committed. And I believe in what we are underneath all of this. I love you.`
   }
 ];
 
-let currentScript = null;
-let scrollInterval = null;
-let isPlaying = false;
-let speed = 1.0;
-let isRecording = false;
-let mediaRecorder = null;
-let recordedChunks = [];
+let currentScript = null, scrollInterval = null, isPlaying = false, speed = 1.0;
+let isRecording = false, mediaRecorder = null, recordedChunks = [];
 
 function startCamera() {
   if (!navigator.mediaDevices) return;
   navigator.mediaDevices.getUserMedia({ video:true, audio:true })
-    .then(stream => {
-      const vid = document.getElementById('cam');
-      vid.srcObject = stream;
-      document.getElementById('no-cam').style.display = 'none';
-    })
+    .then(s => { document.getElementById('cam').srcObject = s; document.getElementById('no-cam').style.display='none'; })
     .catch(() => {});
 }
 
 function switchTab(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const map = { studio:'studio', scripts:'scripts-panel', files:'files-panel' };
-  document.getElementById(map[name]).classList.add('active');
-  if (el) el.classList.add('active');
-  if (name === 'scripts') buildScriptsPanel();
+  document.getElementById({studio:'studio',scripts:'scripts-panel',files:'files-panel'}[name]).classList.add('active');
+  if(el) el.classList.add('active');
+  if(name==='scripts') buildScriptsPanel();
 }
 
 function buildChooser() {
-  const list = document.getElementById('chooser-list');
-  list.innerHTML = '';
+  const l = document.getElementById('chooser-list');
+  l.innerHTML = '';
   scripts.forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'script-btn';
-    btn.innerHTML = `<div class="stitle">${s.id} — ${s.title}</div><div class="stype">${s.type}</div>`;
-    btn.onclick = () => loadScript(s);
-    list.appendChild(btn);
+    const b = document.createElement('button');
+    b.className = 'script-btn';
+    b.innerHTML = `<div class="stitle">${s.id} — ${s.title}</div><div class="stype">${s.type}</div>`;
+    b.onclick = () => loadScript(s);
+    l.appendChild(b);
   });
 }
 
@@ -309,24 +419,23 @@ function buildScriptsPanel() {
   const p = document.getElementById('scripts-panel');
   p.innerHTML = '';
   scripts.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'script-card';
-    card.innerHTML = `<h3>${s.id} — ${s.title}</h3><p>${s.type}</p><button class="load-btn" onclick="loadScriptFromPanel('${s.id}')">LOAD IN STUDIO →</button>`;
-    p.appendChild(card);
+    const c = document.createElement('div');
+    c.className = 'script-card';
+    c.innerHTML = `<h3>${s.id} — ${s.title}</h3><div class="stag">${s.type}</div><button class="load-btn" onclick="loadScriptFromPanel('${s.id}')">LOAD IN STUDIO →</button>`;
+    p.appendChild(c);
   });
 }
 
 function loadScriptFromPanel(id) {
-  const s = scripts.find(x => x.id === id);
-  if (s) { switchTab('studio', document.querySelector('.tab')); setTimeout(() => loadScript(s), 100); }
+  const s = scripts.find(x => x.id===id);
+  if(s) { switchTab('studio', document.querySelectorAll('.tab')[0]); setTimeout(()=>loadScript(s),100); }
 }
 
 function loadScript(s) {
   currentScript = s;
-  const inner = document.getElementById('scroll-inner');
-  let html = s.body.replace(/\n/g, '<br>');
-  if (s.twinFlame) html += `<div id="twin-flame">${s.twinFlame.replace(/\n/g,'<br>')}</div>`;
-  inner.innerHTML = html;
+  let html = s.body.replace(/\n/g,'<br>');
+  if(s.twinFlame) html += `<div id="twin-flame">${s.twinFlame.replace(/\n/g,'<br>')}</div>`;
+  document.getElementById('scroll-inner').innerHTML = html;
   document.getElementById('scroll-zone').scrollTop = 0;
   document.getElementById('prog').style.width = '0%';
   document.getElementById('chooser').style.display = 'none';
@@ -335,19 +444,18 @@ function loadScript(s) {
 }
 
 function exitPrompter() {
-  stopScroll();
-  isPlaying = false;
+  stopScroll(); isPlaying = false;
   document.getElementById('prompter').classList.remove('show');
   document.getElementById('chooser').style.display = 'flex';
-  document.getElementById('play-btn').textContent = '▶ PLAY';
-  document.getElementById('play-btn').classList.remove('playing');
+  const btn = document.getElementById('play-btn');
+  btn.textContent = '▶ PLAY'; btn.classList.remove('playing');
 }
 
 function togglePlay() {
   isPlaying = !isPlaying;
   const btn = document.getElementById('play-btn');
-  if (isPlaying) { btn.textContent = '⏸ PAUSE'; btn.classList.add('playing'); startScroll(); }
-  else { btn.textContent = '▶ PLAY'; btn.classList.remove('playing'); stopScroll(); }
+  if(isPlaying) { btn.textContent='⏸ PAUSE'; btn.classList.add('playing'); startScroll(); }
+  else { btn.textContent='▶ PLAY'; btn.classList.remove('playing'); stopScroll(); }
 }
 
 function startScroll() {
@@ -356,71 +464,63 @@ function startScroll() {
   scrollInterval = setInterval(() => {
     zone.scrollTop += speed * 0.8;
     const max = zone.scrollHeight - zone.clientHeight;
-    document.getElementById('prog').style.width = Math.min(100, (zone.scrollTop / max) * 100) + '%';
-    if (zone.scrollTop >= max) {
+    document.getElementById('prog').style.width = Math.min(100,(zone.scrollTop/max)*100)+'%';
+    if(zone.scrollTop >= max) {
       stopScroll(); isPlaying = false;
-      document.getElementById('play-btn').textContent = '▶ PLAY';
+      document.getElementById('play-btn').textContent='▶ PLAY';
       document.getElementById('play-btn').classList.remove('playing');
       showNotif('✅ SCRIPT COMPLETE');
     }
   }, 16);
 }
 
-function stopScroll() {
-  if (scrollInterval) { clearInterval(scrollInterval); scrollInterval = null; }
+function stopScroll() { if(scrollInterval){clearInterval(scrollInterval);scrollInterval=null;} }
+
+function changeSpeed(d) {
+  speed = Math.max(0.2, Math.min(5.0, speed+d));
+  document.getElementById('speed-display').textContent = speed.toFixed(1)+'×';
+  if(isPlaying){stopScroll();startScroll();}
 }
 
-function changeSpeed(delta) {
-  speed = Math.max(0.2, Math.min(5.0, speed + delta));
-  document.getElementById('speed-display').textContent = speed.toFixed(1) + '×';
-  if (isPlaying) { stopScroll(); startScroll(); }
-}
-
-function toggleRec() {
-  if (!isRecording) startRec(); else stopRec();
-}
+function toggleRec() { if(!isRecording) startRec(); else stopRec(); }
 
 function startRec() {
   const cam = document.getElementById('cam');
-  if (!cam.srcObject) { showNotif('⚠️ Allow camera first'); return; }
+  if(!cam.srcObject){showNotif('⚠️ Allow camera first');return;}
   recordedChunks = [];
   mediaRecorder = new MediaRecorder(cam.srcObject);
   mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-  mediaRecorder.onstop = saveRecording;
-  mediaRecorder.start();
-  isRecording = true;
-  document.getElementById('rec-btn').textContent = '⏹ STOP';
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks,{type:'video/webm'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `anter_${currentScript?currentScript.id:'clip'}_${Date.now()}.webm`;
+    a.click(); showNotif('✅ SAVED TO DEVICE');
+  };
+  mediaRecorder.start(); isRecording = true;
+  document.getElementById('rec-btn').textContent='⏹ STOP';
   document.getElementById('rec-dot').classList.add('on');
   showNotif('🔴 RECORDING...');
 }
 
 function stopRec() {
-  if (mediaRecorder) mediaRecorder.stop();
+  if(mediaRecorder) mediaRecorder.stop();
   isRecording = false;
-  document.getElementById('rec-btn').textContent = '⏺ REC';
+  document.getElementById('rec-btn').textContent='⏺ REC';
   document.getElementById('rec-dot').classList.remove('on');
-}
-
-function saveRecording() {
-  const blob = new Blob(recordedChunks, { type:'video/webm' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `anter_${currentScript ? currentScript.id : 'clip'}_${Date.now()}.webm`;
-  a.click();
-  showNotif('✅ SAVED TO DEVICE');
 }
 
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
-  if (!key) { showNotif('⚠️ Enter your API key first'); return; }
-  localStorage.setItem('anter_udio_key', key);
+  if(!key){showNotif('⚠️ Enter your API key first');return;}
+  localStorage.setItem('anter_udio_key',key);
   showNotif('✅ MUSIC ENGINE ACTIVATED');
 }
 
 function showNotif(msg) {
   const n = document.getElementById('notif');
-  n.textContent = msg; n.classList.add('show');
-  setTimeout(() => n.classList.remove('show'), 3000);
+  n.textContent=msg; n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'),3000);
 }
 
 buildChooser();
