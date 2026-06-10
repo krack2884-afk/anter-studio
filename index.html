@@ -796,24 +796,13 @@ const bootMessages = [
 ];
 
 async function boot() {
-  const bar = document.getElementById('boot-bar');
-  const status = document.getElementById('boot-status');
-  for (let i = 0; i <= 100; i += 2) {
-    bar.style.width = i + '%';
-    if (i % 20 === 0) status.textContent = bootMessages[Math.floor(i/20)] || bootMessages[bootMessages.length-1];
-    await sleep(8);
-  }
-  await sleep(100);
-  document.getElementById('boot').style.opacity = '0';
-  await sleep(200);
+  // Skip all animation — go straight to app
   document.getElementById('boot').style.display = 'none';
-
-  // Always launch — permission screen shows inside app if needed
   launchApp();
   if (!permGranted) {
     setTimeout(() => {
       document.getElementById('perm-screen').style.display = 'flex';
-    }, 500);
+    }, 300);
   }
 }
 
