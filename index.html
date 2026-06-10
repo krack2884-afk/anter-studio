@@ -801,17 +801,19 @@ async function boot() {
   for (let i = 0; i <= 100; i += 2) {
     bar.style.width = i + '%';
     if (i % 20 === 0) status.textContent = bootMessages[Math.floor(i/20)] || bootMessages[bootMessages.length-1];
-    await sleep(18);
+    await sleep(8);
   }
-  await sleep(300);
+  await sleep(100);
   document.getElementById('boot').style.opacity = '0';
-  await sleep(800);
+  await sleep(200);
   document.getElementById('boot').style.display = 'none';
 
+  // Always launch — permission screen shows inside app if needed
+  launchApp();
   if (!permGranted) {
-    document.getElementById('perm-screen').style.display = 'flex';
-  } else {
-    launchApp();
+    setTimeout(() => {
+      document.getElementById('perm-screen').style.display = 'flex';
+    }, 500);
   }
 }
 
