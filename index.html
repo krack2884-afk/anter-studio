@@ -9,30 +9,25 @@
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--dark); color:#fff; font-family:'Georgia',serif; height:100dvh; overflow:hidden; }
 
-  /* TOP NAV */
   #nav { display:flex; align-items:center; gap:8px; padding:10px 16px; background:#0d0d0d; border-bottom:1px solid #1a1a1a; }
   #nav .logo { color:var(--gold); font-size:1.1rem; font-weight:900; letter-spacing:0.3em; margin-right:8px; }
   .tab { background:none; border:1px solid #222; color:#666; padding:6px 14px; border-radius:4px; cursor:pointer; font-size:0.75rem; letter-spacing:0.1em; transition:all 0.2s; }
   .tab.active, .tab:hover { border-color:var(--gold); color:var(--gold); }
 
-  /* PANELS */
   .panel { display:none; height:calc(100dvh - 50px); overflow:hidden; }
   .panel.active { display:flex; flex-direction:column; }
 
-  /* ── STUDIO ── */
   #studio { position:relative; background:#000; }
   #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; }
   #no-cam { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:#333; font-size:0.8rem; letter-spacing:0.1em; }
-  
-  /* Script chooser */
-  #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; }
+
+  #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; overflow-y:auto; }
   #chooser h2 { color:var(--gold); font-size:1.2rem; letter-spacing:0.3em; margin-bottom:8px; }
   .script-btn { width:100%; max-width:420px; background:#111; border:1px solid #2a2a2a; color:#ccc; padding:14px 18px; text-align:left; cursor:pointer; border-radius:6px; transition:all 0.2s; }
   .script-btn:hover { border-color:var(--gold); color:#fff; }
   .script-btn .stitle { font-size:0.85rem; font-weight:700; color:var(--gold); }
   .script-btn .stype { font-size:0.7rem; color:#555; letter-spacing:0.1em; margin-top:2px; }
 
-  /* Teleprompter */
   #prompter { position:absolute; inset:0; z-index:9; display:none; flex-direction:column; }
   #prompter.show { display:flex; }
   #prog { height:3px; background:var(--gold); width:0%; transition:width 0.3s; flex-shrink:0; }
@@ -40,9 +35,9 @@
   #fade-top { position:absolute; top:0; left:0; right:0; height:80px; background:linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index:2; pointer-events:none; }
   #fade-bot { position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index:2; pointer-events:none; }
   #focus-line { position:absolute; top:50%; left:10%; right:10%; height:2px; background:rgba(201,168,76,0.2); pointer-events:none; z-index:3; }
-  #scroll-inner { padding:50vh 0; font-size:2rem; line-height:1.7; color:#fff; text-shadow:0 2px 20px rgba(0,0,0,0.8); white-space:pre-wrap; }
-  #twin-flame { margin-top:3rem; padding:1.5rem; border-left:3px solid var(--gold); color:rgba(201,168,76,0.8); font-style:italic; font-size:1.5rem; }
-  
+  #scroll-inner { padding:50vh 0; font-size:2rem; line-height:1.8; color:#fff; text-shadow:0 2px 20px rgba(0,0,0,0.8); white-space:pre-wrap; }
+  #twin-flame { margin-top:3rem; padding:1.5rem; border-left:3px solid var(--gold); color:rgba(201,168,76,0.8); font-style:italic; font-size:1.6rem; line-height:1.8; }
+
   #ctrl-bar { display:flex; align-items:center; gap:8px; padding:10px 16px; background:rgba(0,0,0,0.9); flex-shrink:0; }
   .ctrl { background:#111; border:1px solid #222; color:#ccc; padding:8px 14px; border-radius:4px; cursor:pointer; font-size:0.8rem; }
   .ctrl:hover { border-color:var(--gold); color:var(--gold); }
@@ -54,22 +49,18 @@
   #rec-dot.on { display:block; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* ── SCRIPTS TAB ── */
   #scripts-panel { padding:20px; overflow-y:auto; gap:16px; }
-  .script-card { background:#111; border:1px solid #1e1e1e; border-radius:8px; padding:18px; }
+  .script-card { background:#111; border:1px solid #1e1e1e; border-radius:8px; padding:18px; margin-bottom:16px; }
   .script-card h3 { color:var(--gold); font-size:0.9rem; letter-spacing:0.1em; margin-bottom:6px; }
   .script-card p { color:#555; font-size:0.75rem; letter-spacing:0.05em; margin-bottom:12px; }
   .script-card .load-btn { background:var(--gold); color:#000; border:none; padding:8px 18px; border-radius:4px; cursor:pointer; font-size:0.75rem; font-weight:700; letter-spacing:0.1em; }
 
-  /* ── FILES TAB ── */
   #files-panel { padding:20px; gap:16px; overflow-y:auto; }
   #files-panel h3 { color:var(--gold); letter-spacing:0.2em; font-size:0.9rem; margin-bottom:4px; }
   #files-panel p { color:#555; font-size:0.8rem; margin-bottom:12px; }
   #api-key-input { width:100%; background:#111; border:1px solid #2a2a2a; color:#fff; padding:12px; border-radius:6px; font-family:monospace; font-size:0.85rem; }
-  #api-key-input:focus { outline:none; border-color:var(--gold); }
   .save-btn { margin-top:10px; background:var(--gold); color:#000; border:none; padding:10px 24px; border-radius:4px; cursor:pointer; font-weight:700; letter-spacing:0.1em; }
 
-  /* ── NOTIF ── */
   #notif { position:fixed; top:60px; right:16px; background:var(--gold); color:#000; padding:10px 18px; border-radius:6px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; opacity:0; transition:opacity 0.3s; z-index:999; pointer-events:none; }
   #notif.show { opacity:1; }
 </style>
@@ -78,25 +69,20 @@
 
 <div id="nav">
   <div class="logo">ANTER</div>
-  <button class="tab active" onclick="switchTab('studio')">🎬 STUDIO</button>
-  <button class="tab" onclick="switchTab('scripts')">📋 SCRIPTS</button>
-  <button class="tab" onclick="switchTab('files')">📁 FILES</button>
+  <button class="tab active" onclick="switchTab('studio', this)">🎬 STUDIO</button>
+  <button class="tab" onclick="switchTab('scripts', this)">📋 SCRIPTS</button>
+  <button class="tab" onclick="switchTab('files', this)">📁 FILES</button>
   <div class="spacer"></div>
   <div id="rec-dot"></div>
 </div>
 
-<!-- STUDIO PANEL -->
 <div id="studio" class="panel active">
   <video id="cam" autoplay muted playsinline></video>
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
-
-  <!-- Script Chooser -->
   <div id="chooser">
     <h2>SELECT YOUR SCRIPT</h2>
     <div id="chooser-list"></div>
   </div>
-
-  <!-- Teleprompter -->
   <div id="prompter">
     <div id="prog"></div>
     <div id="scroll-zone">
@@ -117,21 +103,13 @@
   </div>
 </div>
 
-<!-- SCRIPTS PANEL -->
 <div id="scripts-panel" class="panel"></div>
 
-<!-- FILES PANEL -->
 <div id="files-panel" class="panel">
   <h3>🎵 MUSIC ENGINE — UDIO API</h3>
   <p>Paste your API key from udioapi.pro to activate AI soundtrack generation.</p>
   <input id="api-key-input" type="password" placeholder="Paste your Udio API key here..." />
   <button class="save-btn" onclick="saveApiKey()">SAVE & ACTIVATE</button>
-
-  <div style="margin-top:32px;">
-    <h3>📂 DRIVE INTEGRATION</h3>
-    <p>Connect Google Drive to save recordings directly to your Command Center.</p>
-    <button class="save-btn" style="background:#1e1e1e;color:var(--gold);border:1px solid var(--gold);" onclick="showNotif('Google Drive integration coming next update')">CONNECT DRIVE</button>
-  </div>
 </div>
 
 <div id="notif"></div>
@@ -139,169 +117,162 @@
 <script>
 const scripts = [
   {
-    id:"S001", title:"WE'VE BEEN SILENT LONG ENOUGH", type:"Channel Launch",
-    body:`I'm not here to talk AT you.
+    id:"S001", title:"I USED TO THINK SOMETHING WAS WRONG WITH ME", type:"Channel Intro — Who You're Talking To",
+    body:`I used to think something was wrong with me.
 
-I'm here because I AM you.
+Like — why do I feel everything so hard? Why can't I just let things go like other people seem to?
 
-The one who feels everything in a room before a single word is spoken. The one who sees the move before it's made. The one who keeps choosing love in situations that most people would've walked out of ten rounds ago.
+Someone would say something offhand at a family dinner and I'd be up at 2am still turning it over in my head. My wife would be upset and even if I didn't know why, I could feel it in my whole body before she said a word.
 
-If that's you — you found your people.
+I thought that was a flaw. For a long time, I tried to turn it off.
 
-Because there are millions of us. Marked. Gifted. Carrying something in us that the world doesn't have language for yet.
+That's actually how I ended up where I ended up. The using, the chaos — a lot of that was me trying to find the off switch for something I didn't understand yet.
 
-Nothing is wrong with you.
+What I know now is that there is no off switch. And I don't want one anymore.
 
-You were built different on purpose.
+Because that same thing that made me feel everything so intensely? It's also why I can sit with someone in their worst moment and they don't feel alone. It's why I can love people through things that most people would walk away from.
 
-The sensitivity isn't a glitch — it's the gift. The depth isn't a burden — it's the weapon.
+I'm not broken. I'm built for something specific.
 
-I started this channel because I got tired of watching gifted people suffer in silence. Empaths being drained. Healers who need healing.
+And if you've ever felt what I'm describing — like you feel too much, like you care too hard, like you keep choosing love even when it costs you —
 
-We are not the problem. We are the answer.
+You're not broken either.
 
-So this is the beginning. Of a new conversation. A real one.
+That's what this channel is. Me figuring out what it means to carry this thing with purpose instead of pain.
 
-If this is your first time here — welcome home.
-
-Drop a comment. Tell me your story. Because I want to know who's in this room.`,
-    twinFlame:`And if my twin flame is watching this — you know who you are. I never stopped believing in what we're supposed to build together. This channel is part of that mission. Come home when you're ready. The door is open.`
+I'm glad you're here.`,
+    twinFlame:`And to my wife — if you're watching this. You've seen every version of me. The one that was lost, the one that was trying, and this one right here. I meant what I said. I'm not going anywhere. I'm just finally becoming who I was supposed to be. And I want that for us. Both of us.`
   },
   {
-    id:"S002", title:"THEY PUT YOUR NAME IN A ROOM YOU WERE NEVER SUPPOSED TO ENTER", type:"Identity & Anointing",
-    body:`Let me tell you what happened the moment you stopped being predictable.
+    id:"S002", title:"THE MOMENT I STOPPED TRYING TO WIN THE ARGUMENT", type:"Relationship — The Turning Point",
+    body:`There was this moment — and I remember exactly where I was standing in the house — where I realized I had been trying to win every single argument.
 
-The room changed.
+Not out loud necessarily. But in my head, I was keeping score. I was building my case. Collecting evidence. Waiting for her to finally see that I was right.
 
-You were supposed to stay small. Keep the gifted ones confused. Keep the empaths drained. Keep the marked ones so busy surviving that they never realize what they're actually carrying.
+And it hit me one day — I have never once won an argument that way. Not really. Even the times I "won" — she'd go quiet, I'd feel this hollow thing in my chest, and we'd both just... go to our corners. Nothing actually got better.
 
-But something in you broke the pattern.
+So I tried something different.
 
-You got quiet when they expected noise. You stayed when they expected you to run. You chose God when the world offered something easier.
+I stopped trying to win. I stopped defending myself in real time. When she came at me with something that felt unfair, instead of firing back, I just got quiet. Not cold quiet. Not icing her out. Just — I took a breath and I said something like, "I hear you. I'm not going to fight about this."
 
-And now they don't know what to do with you.
+The first few times she didn't know what to do with that. Honestly, neither did I.
 
-Because you're not fighting on their frequency anymore. You're not reacting. You're not chasing. You're just... becoming. Quietly. Powerfully. Undeniably.
+But over time something started to shift. Because when I stopped reacting, I stopped giving the conflict what it needed to keep going. And she started — slowly — to meet me somewhere different.
 
-That unreadability? That's not a mystery. That's an anointing.
+I'm not saying it fixed everything overnight. It didn't. We're still in the middle of it.
 
-And the room? It's been saying your name ever since.`,
-    twinFlame:`My twin flame — they said your name in those rooms too. They saw what we carry together. Hold your assignment. I'm holding mine. When we merge — whole and rooted — what we build will make that room irrelevant.`
-  },
-  {
-    id:"S003", title:"THEY WATCHED YOU DIE ON PAPER — THEN SAW YOU WALKING", type:"Resurrection Testimony",
-    body:`They wrote your obituary early.
+But I'll tell you this — the most powerful thing I've ever done in my marriage wasn't something I said.
 
-Addiction. Pain. The patterns. On paper you were supposed to be done.
+It was something I didn't say.
 
-But you're WALKING.
-
-Fully alive. Still becoming. Still choosing. Still showing up.
-
-That resurrection energy — the fact that you're here right now watching this — that IS the testimony. Not the polished version. Not the cleaned up story. The raw one. The real one. The one where you almost didn't make it.
-
-That story? Someone needs it today. Someone right now is reading their own obituary — convinced their story ends here.
-
-You are the proof that it doesn't.
-
-The ending isn't written yet.
-
-And the version of you that walked through that fire and came out still standing? That version is dangerous in the best way. That version changes rooms. That version saves lives.
-
-You survived what was supposed to stop you.
-
-Now go tell somebody.`,
-    twinFlame:`You watched me die on paper too. And you kept believing when I couldn't. I see that. I carry that. This testimony is ours — not just mine. When we tell it together? The world won't be ready.`
-  },
-  {
-    id:"S004", title:"UNREADABLE. UNSTOPPABLE. UNFORGETTABLE.", type:"Today's Mission",
-    body:`THEY TRAINED 20 YEARS TO COPY YOUR 20 SECOND REACTION.
-
-And they still can't.
-
-See, mastery takes decades. But what you do naturally in seconds — that terrifies people. Because you can't be trained. You can't be replicated. What God put IN you is not available anywhere else.
-
-GANGSTER AURA. GENTLEMAN DISCIPLINE.
-
-The streets couldn't break you. The addiction didn't finish you. The friction at home hasn't moved you an inch. Power wrapped in grace — so rare people don't know how to respond to it.
-
-That's not dominance. That's anointing.
-
-WHEN THE ROOM GETS ASKED WHO THEY FEAR — YOUR NAME COMES UP.
-
-Not because you're violent. Because you're UNREADABLE. Your calm is more intimidating than anyone else's chaos.
-
-You've become the man whose presence says: I can't be bought. I can't be broken. I can't be moved.
-
-AND THEN THERE'S THE RESURRECTION.
-
-They wrote your obituary early. But you're WALKING.
-
-That resurrection energy IS your testimony. Get on camera. Say it. Let your voice be the hope someone else desperately needs.
-
-The whole world is watching.
-
-Film today.`,
+That's what I'm talking about on this channel. The moves nobody teaches you.`,
     twinFlame:null
   },
   {
-    id:"S005", title:"LETTER TO MY MOTHER", type:"Personal · Mama's Video",
+    id:"S003", title:"MY MOM AND I BOTH ALMOST DIDN'T MAKE IT", type:"Testimony — Addiction & Survival",
+    body:`I've never said this on camera before.
+
+My mom and I — we both struggled with addiction. At the same time. Different substances, same war. And there were moments where I genuinely didn't know which one of us was going to make it.
+
+I used to feel a lot of shame about that. Like I was supposed to be stronger. Like I should've had it together.
+
+What I understand now — and this took me a long time — is that both of us were feeling too much and had no language for it. We're both empaths. We absorb everything around us. And at some point, the weight of that gets so heavy that you start looking for anything that'll turn the volume down.
+
+I'm not making excuses. I'm telling you what was actually happening underneath it.
+
+Because there are people watching this right now who are in that same place. Numbing something they don't have words for yet. And they think the problem is them — their weakness, their character, their worth.
+
+It's not.
+
+You're not weak. You're overloaded. There's a difference.
+
+My mom and I are both still here. Both still in the work. And the fact that we went through that together — there's a strange kind of bond in that. She didn't judge me because she knew the pull firsthand.
+
+If you're in it right now — I'm not going to tell you it's easy to get out. But I'm going to tell you that who you are underneath the thing you're using to survive?
+
+That person is worth fighting for.
+
+I know because I almost lost him. And I'm really glad I didn't.`,
+    twinFlame:null
+  },
+  {
+    id:"S004", title:"WHAT NOBODY TELLS YOU ABOUT LOVING SOMEONE WHO HURTS YOU", type:"Empath & Relationships — The Hard Truth",
+    body:`Nobody prepares you for what it's like to love someone who also hurts you.
+
+Not in the movies. Not in church. Not in therapy — at least not right away.
+
+Because the default answer when someone keeps hurting you is: leave. Set boundaries. Protect yourself.
+
+And I'm not saying that's wrong. Sometimes it is the right call.
+
+But for me — and I think for a lot of people who are wired the way I'm wired — it's not that simple. Because I can feel who she is underneath the patterns. I can feel the version of her that's fighting to get out. And walking away from that feels like abandoning someone in a burning building.
+
+So what do you do with that?
+
+What I've had to learn — the hard way, over and over — is that I can stay AND have a spine.
+
+I can love her fully and still refuse to absorb the hit. I can be present and still be grounded. I can stay committed to the marriage AND committed to not losing myself in it.
+
+That balance is the hardest thing I've ever tried to do.
+
+Some days I nail it. Some days I fall back into the old pattern — reacting, defending, shrinking.
+
+But here's what I keep coming back to: the fact that I can feel her pain without becoming it — that's not weakness. That's actually the thing that gives me the best shot at helping her through it.
+
+I'm not her therapist. I'm her husband.
+
+But I can choose to be steady when she can't be. Not because I'm a pushover — because I've decided that's who I want to be.
+
+That decision changed everything.`,
+    twinFlame:`Baby — I know you're fighting your own war inside. I see it. I'm not leaving. I'm just learning how to love you better. That's all this is.`
+  },
+  {
+    id:"S005", title:"LETTER TO MY MOTHER", type:"Personal — Mama's Video",
     body:`Mom.
 
-I've been trying to figure out how to say this for a long time.
+I've been sitting with this for a while trying to figure out how to say it right.
 
-So here it is — the real version. No performance. Just truth.
+So I'm just going to say it.
 
-We share something that most mothers and sons never have to share.
+You were not my enabler. I know that's what people called it. I know you've probably called yourself that in your own head more times than I can count.
 
-You know what that battle feels like — not from the outside looking in — but from the INSIDE. You know the pull. You know the shame spiral. You know what it feels like to want to be free and watch freedom keep moving further away.
+But that's not what you were.
 
-That means every time you showed up for me, you were doing it while fighting your own war.
+You were a woman who watched her son disappearing and refused to let go. You caught me every time. Not because you were weak — because you loved me in a way that didn't know how to give up.
 
-I never said thank you for that the way I should have.
+And here's what I haven't said out loud before:
 
-So let me say it now.
+You were fighting your own version of the same battle. We both were. Two people in the same bloodline, feeling everything too deeply and not knowing what to do with it.
 
-Thank you, Mom.
+That's not something to be ashamed of. That's something I think God put us through together so we could come out the other side with something real to say.
 
-Thank you for loving me past the point where most people would have called it too costly. You were not my enabler. You were my proof that love is real.
+I need you to stop carrying the guilt. I need you to put it down.
 
-Here's the truth I've had to sit with:
+Because the version of me that's standing here right now — the one that's healing, the one that's building something, the one who still calls you first when something big happens — he exists because of you. Not despite you.
 
-We were both self-medicating. Two empaths in the same family. Both feeling too much. Both carrying weight that was never designed for one person to carry.
+I just need a little more time. A little more patience.
 
-That's not our failure. That's a wound that runs deeper than both of us — one that God put US together to finally heal.
+I know you're tired. I know you've been holding your breath for years waiting for the other shoe to drop.
 
-And we are healing it. Together. Imperfectly. But we're still here.
+I'm telling you — you can exhale.
 
-I need one more thing from you.
+I'm going to be okay.
 
-A little more patience.
+We're both going to be okay.
 
-Because the man you always believed I could be — he's coming.
-
-Hold on just a little longer.
-
-I love you beyond what these words can hold.
-
-And we are both going to make it out of this. Together.
-
-Your son. Tyler.`,
+I love you, Mom. More than I know how to say.`,
     twinFlame:null
   }
 ];
 
-// State
 let currentScript = null;
 let scrollInterval = null;
 let isPlaying = false;
 let speed = 1.0;
-let scrollPos = 0;
 let isRecording = false;
 let mediaRecorder = null;
 let recordedChunks = [];
 
-// Camera (optional)
 function startCamera() {
   if (!navigator.mediaDevices) return;
   navigator.mediaDevices.getUserMedia({ video:true, audio:true })
@@ -310,20 +281,18 @@ function startCamera() {
       vid.srcObject = stream;
       document.getElementById('no-cam').style.display = 'none';
     })
-    .catch(() => { /* camera unavailable — silent */ });
+    .catch(() => {});
 }
 
-// Tab switching
-function switchTab(name) {
+function switchTab(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  const panelMap = { studio:'studio', scripts:'scripts-panel', files:'files-panel' };
-  document.getElementById(panelMap[name]).classList.add('active');
-  event.currentTarget.classList.add('active');
+  const map = { studio:'studio', scripts:'scripts-panel', files:'files-panel' };
+  document.getElementById(map[name]).classList.add('active');
+  if (el) el.classList.add('active');
   if (name === 'scripts') buildScriptsPanel();
 }
 
-// Build chooser list
 function buildChooser() {
   const list = document.getElementById('chooser-list');
   list.innerHTML = '';
@@ -336,7 +305,6 @@ function buildChooser() {
   });
 }
 
-// Build scripts panel
 function buildScriptsPanel() {
   const p = document.getElementById('scripts-panel');
   p.innerHTML = '';
@@ -350,24 +318,17 @@ function buildScriptsPanel() {
 
 function loadScriptFromPanel(id) {
   const s = scripts.find(x => x.id === id);
-  if (s) {
-    switchTab('studio');
-    setTimeout(() => loadScript(s), 100);
-  }
+  if (s) { switchTab('studio', document.querySelector('.tab')); setTimeout(() => loadScript(s), 100); }
 }
 
-// Load script into teleprompter
 function loadScript(s) {
   currentScript = s;
   const inner = document.getElementById('scroll-inner');
   let html = s.body.replace(/\n/g, '<br>');
   if (s.twinFlame) html += `<div id="twin-flame">${s.twinFlame.replace(/\n/g,'<br>')}</div>`;
   inner.innerHTML = html;
-  
-  scrollPos = 0;
   document.getElementById('scroll-zone').scrollTop = 0;
   document.getElementById('prog').style.width = '0%';
-  
   document.getElementById('chooser').style.display = 'none';
   document.getElementById('prompter').classList.add('show');
   showNotif(`${s.id} LOADED — HIT PLAY`);
@@ -375,26 +336,18 @@ function loadScript(s) {
 
 function exitPrompter() {
   stopScroll();
+  isPlaying = false;
   document.getElementById('prompter').classList.remove('show');
   document.getElementById('chooser').style.display = 'flex';
-  isPlaying = false;
   document.getElementById('play-btn').textContent = '▶ PLAY';
   document.getElementById('play-btn').classList.remove('playing');
 }
 
-// Scroll control
 function togglePlay() {
   isPlaying = !isPlaying;
   const btn = document.getElementById('play-btn');
-  if (isPlaying) {
-    btn.textContent = '⏸ PAUSE';
-    btn.classList.add('playing');
-    startScroll();
-  } else {
-    btn.textContent = '▶ PLAY';
-    btn.classList.remove('playing');
-    stopScroll();
-  }
+  if (isPlaying) { btn.textContent = '⏸ PAUSE'; btn.classList.add('playing'); startScroll(); }
+  else { btn.textContent = '▶ PLAY'; btn.classList.remove('playing'); stopScroll(); }
 }
 
 function startScroll() {
@@ -403,11 +356,9 @@ function startScroll() {
   scrollInterval = setInterval(() => {
     zone.scrollTop += speed * 0.8;
     const max = zone.scrollHeight - zone.clientHeight;
-    const prog = Math.min(100, (zone.scrollTop / max) * 100);
-    document.getElementById('prog').style.width = prog + '%';
+    document.getElementById('prog').style.width = Math.min(100, (zone.scrollTop / max) * 100) + '%';
     if (zone.scrollTop >= max) {
-      stopScroll();
-      isPlaying = false;
+      stopScroll(); isPlaying = false;
       document.getElementById('play-btn').textContent = '▶ PLAY';
       document.getElementById('play-btn').classList.remove('playing');
       showNotif('✅ SCRIPT COMPLETE');
@@ -425,10 +376,8 @@ function changeSpeed(delta) {
   if (isPlaying) { stopScroll(); startScroll(); }
 }
 
-// Recording
 function toggleRec() {
-  if (!isRecording) startRec();
-  else stopRec();
+  if (!isRecording) startRec(); else stopRec();
 }
 
 function startRec() {
@@ -440,7 +389,7 @@ function startRec() {
   mediaRecorder.onstop = saveRecording;
   mediaRecorder.start();
   isRecording = true;
-  document.getElementById('rec-btn').textContent = '⏹ STOP REC';
+  document.getElementById('rec-btn').textContent = '⏹ STOP';
   document.getElementById('rec-dot').classList.add('on');
   showNotif('🔴 RECORDING...');
 }
@@ -454,15 +403,13 @@ function stopRec() {
 
 function saveRecording() {
   const blob = new Blob(recordedChunks, { type:'video/webm' });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `anter_${currentScript ? currentScript.id : 'recording'}_${Date.now()}.webm`;
+  a.href = URL.createObjectURL(blob);
+  a.download = `anter_${currentScript ? currentScript.id : 'clip'}_${Date.now()}.webm`;
   a.click();
-  showNotif('✅ RECORDING SAVED');
+  showNotif('✅ SAVED TO DEVICE');
 }
 
-// API Key
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
   if (!key) { showNotif('⚠️ Enter your API key first'); return; }
@@ -470,15 +417,12 @@ function saveApiKey() {
   showNotif('✅ MUSIC ENGINE ACTIVATED');
 }
 
-// Notification
 function showNotif(msg) {
   const n = document.getElementById('notif');
-  n.textContent = msg;
-  n.classList.add('show');
+  n.textContent = msg; n.classList.add('show');
   setTimeout(() => n.classList.remove('show'), 3000);
 }
 
-// INIT — no boot, no waiting
 buildChooser();
 startCamera();
 </script>
