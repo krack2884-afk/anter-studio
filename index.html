@@ -17,8 +17,8 @@
   .panel { display:none; height:calc(100dvh - 50px); overflow:hidden; }
   .panel.active { display:flex; flex-direction:column; }
 
-  #studio { position:relative; background:#000; }
-  #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.9; z-index:2; }
+  #studio { position:relative; background:#000; overflow:hidden; width:100%; }
+  #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:2; }
   #no-cam { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:#333; font-size:0.8rem; letter-spacing:0.1em; }
 
   #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px; overflow-y:auto; }
@@ -76,10 +76,10 @@
   .closet-item.active .ci-name { color:var(--gold); }
 
   /* Rorschach overlay */
-  #rorschach-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:4; pointer-events:none; display:none; }
+  #rorschach-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:5; pointer-events:none; display:none; }
   
   /* Virtual outfit overlay */
-  #outfit-overlay { position:absolute; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:400px; height:100%; z-index:3; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
+  #outfit-overlay { position:absolute; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:400px; height:100%; z-index:4; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
   #hat-layer { position:absolute; top:-2%; width:70%; display:none; }
   #shirt-layer { position:absolute; bottom:0; width:100%; display:none; }
   #mask-layer { position:absolute; top:8%; width:55%; display:none; }
@@ -90,7 +90,7 @@
   .bg-opt { width:160px; height:70px; border-radius:6px; cursor:pointer; border:2px solid transparent; background-size:cover; background-position:center; position:relative; overflow:hidden; flex-shrink:0; }
   .bg-opt:hover, .bg-opt.active { border-color:var(--gold); }
   .bg-opt span { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; letter-spacing:0.08em; padding:3px 6px; }
-  #bg-overlay { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.9; z-index:1; pointer-events:none; transition:opacity 0.4s; }
+  #bg-overlay { position:absolute; inset:0; z-index:1; pointer-events:none; transition:background 0.5s; }
   #bg-video-el { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.8; z-index:1; pointer-events:none; display:none; }
   #notif { position:fixed; top:60px; right:16px; background:var(--gold); color:#000; padding:10px 18px; border-radius:6px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; opacity:0; transition:opacity 0.3s; z-index:999; pointer-events:none; }
   #notif.show { opacity:1; }
@@ -1037,35 +1037,280 @@ function toggleBgPicker() {
   document.getElementById('bg-picker').classList.toggle('show');
 }
 
-const bgConfigs = {
-  'none': { gradient: null, particles: false },
-  'fire-cave': { 
-    gradient: 'radial-gradient(ellipse at bottom, #3d1a00 0%, #1a0800 40%, #0a0500 100%)',
-    overlay: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,100,0,0.03) 2px, rgba(255,100,0,0.03) 4px)'
+
+function drawBgCanvas(drawFn) {
+  const overlay = document.getElementById('bg-overlay');
+  const tc = document.createElement('canvas');
+  tc.width = 800; tc.height = 600;
+  const ctx = tc.getContext('2d');
+  drawFn(ctx, 800, 600);
+  overlay.style.backgroundImage = 'url(' + tc.toDataURL() + ')';
+  overlay.style.backgroundSize = 'cover';
+  overlay.style.backgroundPosition = 'center';
+}
+
+const bgDrawers = {
+  'none': null,
+
+  'fire-cave': (ctx, W, H) => {
+    // Dark cave walls
+    const bg = ctx.createRadialGradient(W/2,H,10,W/2,H/2,H);
+    bg.addColorStop(0,'#5a2000'); bg.addColorStop(0.4,'#2a0e00'); bg.addColorStop(1,'#080200');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // Cave stalactites top
+    ctx.fillStyle='#0d0500';
+    for(let i=0;i<12;i++){
+      const x=i*(W/11)+Math.random()*20;
+      const h=30+Math.random()*80;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+18,0); ctx.lineTo(x+9,h); ctx.fill();
+    }
+    // Rock wall texture
+    ctx.strokeStyle='rgba(80,30,0,0.4)'; ctx.lineWidth=1;
+    for(let i=0;i<40;i++){
+      ctx.beginPath();
+      ctx.moveTo(Math.random()*W, Math.random()*H);
+      ctx.lineTo(Math.random()*W, Math.random()*H);
+      ctx.stroke();
+    }
+    // Ancient petroglyphs/handprints
+    ctx.strokeStyle='rgba(200,80,10,0.35)'; ctx.lineWidth=2;
+    // stick figures
+    [[80,200],[700,300],[150,400],[650,180]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y+10); ctx.lineTo(x,y+35); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x-12,y+20); ctx.lineTo(x+12,y+20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y+35); ctx.lineTo(x-10,y+55); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y+35); ctx.lineTo(x+10,y+55); ctx.stroke();
+    });
+    // handprint shapes
+    ctx.fillStyle='rgba(180,60,10,0.3)';
+    [[600,400],[120,120],[400,460]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.ellipse(x,y,15,20,0,0,Math.PI*2); ctx.fill();
+      for(let f=0;f<4;f++){
+        ctx.beginPath(); ctx.ellipse(x-15+f*10,y-22,3,8,-0.2+f*0.15,0,Math.PI*2); ctx.fill();
+      }
+      ctx.beginPath(); ctx.ellipse(x-20,y-8,4,7,-0.8,0,Math.PI*2); ctx.fill();
+    });
+    // ember glow at bottom
+    const embers = ctx.createRadialGradient(W/2,H,0,W/2,H,H*0.5);
+    embers.addColorStop(0,'rgba(255,120,0,0.25)'); embers.addColorStop(1,'transparent');
+    ctx.fillStyle=embers; ctx.fillRect(0,0,W,H);
   },
-  'prison': { 
-    gradient: 'linear-gradient(180deg, #050008 0%, #0d0015 50%, #020005 100%)',
-    overlay: 'repeating-linear-gradient(90deg, rgba(100,0,200,0.04) 0px, rgba(100,0,200,0.04) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, rgba(100,0,200,0.04) 0px, rgba(100,0,200,0.04) 1px, transparent 1px, transparent 60px)'
+
+  'prison': (ctx, W, H) => {
+    // Dark stone base
+    ctx.fillStyle='#080810'; ctx.fillRect(0,0,W,H);
+    // Stone brick pattern
+    const bW=60, bH=25;
+    for(let row=0;row<H/bH+1;row++){
+      const off=(row%2)*bW/2;
+      for(let col=-1;col<W/bW+2;col++){
+        const x=col*bW-off, y=row*bH;
+        ctx.strokeStyle=`rgba(${40+Math.random()*20},${40+Math.random()*20},${60+Math.random()*20},0.6)`;
+        ctx.lineWidth=1;
+        ctx.strokeRect(x+1,y+1,bW-2,bH-2);
+        // stone texture fill
+        ctx.fillStyle=`rgba(${15+Math.random()*10},${15+Math.random()*10},${25+Math.random()*10},0.4)`;
+        ctx.fillRect(x+2,y+2,bW-4,bH-4);
+      }
+    }
+    // Iron bars overlay
+    ctx.strokeStyle='rgba(60,60,80,0.7)'; ctx.lineWidth=8;
+    for(let b=0;b<8;b++){
+      const x=b*(W/7);
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+    // horizontal bars
+    ctx.lineWidth=5;
+    [H*0.3, H*0.6].forEach(y=>{
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    });
+    // purple dungeon light from above
+    const dlight = ctx.createRadialGradient(W/2,0,0,W/2,0,H*0.6);
+    dlight.addColorStop(0,'rgba(80,0,120,0.2)'); dlight.addColorStop(1,'transparent');
+    ctx.fillStyle=dlight; ctx.fillRect(0,0,W,H);
+    // torches on wall
+    [[100,150],[700,150]].forEach(([tx,ty])=>{
+      ctx.fillStyle='#3a1800'; ctx.fillRect(tx-4,ty,8,20);
+      const tg=ctx.createRadialGradient(tx,ty,0,tx,ty,40);
+      tg.addColorStop(0,'rgba(255,150,0,0.5)'); tg.addColorStop(1,'transparent');
+      ctx.fillStyle=tg; ctx.fillRect(tx-40,ty-40,80,80);
+    });
   },
-  'monastery': { 
-    gradient: 'radial-gradient(ellipse at top, #1a1200 0%, #0d0900 60%, #050400 100%)',
-    overlay: 'radial-gradient(circle at 50% 0%, rgba(255,200,50,0.08) 0%, transparent 60%)'
+
+  'monastery': (ctx, W, H) => {
+    // Deep stone brown base
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0a0800'); bg.addColorStop(0.5,'#120f03'); bg.addColorStop(1,'#050400');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // Arched stone columns
+    ctx.strokeStyle='rgba(100,85,40,0.5)'; ctx.lineWidth=6;
+    [100,300,500,700].forEach(x=>{
+      // column
+      ctx.strokeRect(x-12,H*0.2,24,H*0.8);
+      // arch top
+      ctx.beginPath(); ctx.arc(x,H*0.2,60,Math.PI,0); ctx.stroke();
+    });
+    // Candlelight glow from below altar
+    const cg=ctx.createRadialGradient(W/2,H,0,W/2,H,H*0.7);
+    cg.addColorStop(0,'rgba(255,180,30,0.2)'); cg.addColorStop(1,'transparent');
+    ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
+    // Individual candle lights
+    [[W/2-80,H-40],[W/2,H-50],[W/2+80,H-40],[W/2-160,H-30],[W/2+160,H-30]].forEach(([cx,cy])=>{
+      const fl=ctx.createRadialGradient(cx,cy,0,cx,cy,60);
+      fl.addColorStop(0,'rgba(255,200,50,0.4)'); fl.addColorStop(1,'transparent');
+      ctx.fillStyle=fl; ctx.fillRect(cx-60,cy-60,120,120);
+      ctx.fillStyle='#ffe080'; ctx.fillRect(cx-2,cy-8,4,8);
+    });
+    // Cross on back wall
+    ctx.strokeStyle='rgba(120,100,40,0.4)'; ctx.lineWidth=10;
+    ctx.beginPath(); ctx.moveTo(W/2,H*0.05); ctx.lineTo(W/2,H*0.35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W/2-40,H*0.15); ctx.lineTo(W/2+40,H*0.15); ctx.stroke();
+    // Stone floor lines
+    ctx.strokeStyle='rgba(60,50,20,0.3)'; ctx.lineWidth=1;
+    for(let y=H*0.6;y<H;y+=20){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
   },
-  'cave-art': { 
-    gradient: 'radial-gradient(ellipse at center, #1a1000 0%, #0d0800 50%, #050400 100%)',
-    overlay: 'radial-gradient(circle at 20% 30%, rgba(150,80,20,0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(100,50,10,0.08) 0%, transparent 35%)'
+
+  'cave-art': (ctx, W, H) => {
+    // Raw cave wall ochre/sienna
+    const bg=ctx.createRadialGradient(W/2,H/2,50,W/2,H/2,W*0.8);
+    bg.addColorStop(0,'#1a0f04'); bg.addColorStop(0.6,'#120a02'); bg.addColorStop(1,'#080500');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // Rough cave wall texture
+    for(let i=0;i<200;i++){
+      const x=Math.random()*W, y=Math.random()*H;
+      const r=2+Math.random()*8;
+      ctx.fillStyle=`rgba(${60+Math.random()*40},${30+Math.random()*20},${5+Math.random()*10},${0.1+Math.random()*0.15})`;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+    // Ancient animal paintings — bison, deer shapes
+    ctx.fillStyle='rgba(160,60,10,0.55)';
+    // Bison shape (left wall)
+    ctx.save(); ctx.translate(120,220);
+    ctx.beginPath(); ctx.ellipse(0,0,55,30,0.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-35,-20,22,18,0.5,0,Math.PI*2); ctx.fill(); // head
+    ctx.fillRect(-90,10,15,35); ctx.fillRect(-60,12,15,35); // legs front
+    ctx.fillRect(20,12,15,35); ctx.fillRect(50,10,15,35); // legs back
+    ctx.restore();
+    // Deer shape (right wall)
+    ctx.fillStyle='rgba(140,80,20,0.5)';
+    ctx.save(); ctx.translate(620,300);
+    ctx.beginPath(); ctx.ellipse(0,0,40,22,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-28,-18,14,20,0.4,0,Math.PI*2); ctx.fill();
+    // antlers
+    ctx.strokeStyle='rgba(140,80,20,0.5)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(-35,-30); ctx.lineTo(-50,-55); ctx.lineTo(-40,-70); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-35,-30); ctx.lineTo(-25,-58); ctx.stroke();
+    ctx.restore();
+    // Hand stencils
+    ctx.fillStyle='rgba(180,60,10,0.35)';
+    [[200,400],[580,180],[400,350]].forEach(([hx,hy])=>{
+      ctx.beginPath(); ctx.ellipse(hx,hy,14,18,-0.1,0,Math.PI*2); ctx.fill();
+      const fingers=[[-12,-2,-20],[-6,2,-24],[0,4,-26],[6,2,-24],[12,-2,-18]];
+      fingers.forEach(([dx,r,fy])=>{
+        ctx.beginPath(); ctx.ellipse(hx+dx,hy+fy,3.5,9,r*Math.PI/180,0,Math.PI*2); ctx.fill();
+      });
+    });
+    // Sun/spiral symbols
+    ctx.strokeStyle='rgba(200,120,30,0.4)'; ctx.lineWidth=2;
+    [[350,120],[100,350],[680,420]].forEach(([sx,sy])=>{
+      for(let r=5;r<25;r+=6){
+        ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*1.8); ctx.stroke();
+      }
+    });
   },
-  'cathedral': { 
-    gradient: 'linear-gradient(180deg, #0a0800 0%, #1a1200 30%, #050400 100%)',
-    overlay: 'repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,180,0,0.02) 30px, rgba(255,180,0,0.02) 31px)'
+
+  'cathedral': (ctx, W, H) => {
+    ctx.fillStyle='#060504'; ctx.fillRect(0,0,W,H);
+    // Gothic ribbed vaults on ceiling
+    ctx.strokeStyle='rgba(80,65,30,0.45)'; ctx.lineWidth=3;
+    for(let i=0;i<6;i++){
+      const x=i*(W/5);
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.quadraticCurveTo(W/2,H*0.3,W-x,0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.quadraticCurveTo(x+W*0.1,H*0.5,W/2,H); ctx.stroke();
+    }
+    // Stained glass windows (colored light patches)
+    const glassColors=[['rgba(150,0,0,0.2)','rgba(200,0,0,0.1)'],
+                       ['rgba(0,50,150,0.2)','rgba(0,80,200,0.1)'],
+                       ['rgba(100,80,0,0.2)','rgba(180,140,0,0.1)']];
+    [[80,60],[W/2-60,40],[W-160,60]].forEach(([wx,wy],i)=>{
+      const [c1,c2]=glassColors[i];
+      // pointed arch window
+      ctx.fillStyle=c1;
+      ctx.beginPath();
+      ctx.moveTo(wx,wy+120); ctx.lineTo(wx,wy+40);
+      ctx.quadraticCurveTo(wx+40,wy-20,wx+80,wy+40);
+      ctx.lineTo(wx+80,wy+120); ctx.closePath(); ctx.fill();
+      // window glow on floor
+      const wg=ctx.createRadialGradient(wx+40,H,0,wx+40,H,H*0.6);
+      wg.addColorStop(0,c2); wg.addColorStop(1,'transparent');
+      ctx.fillStyle=wg; ctx.fillRect(0,0,W,H);
+    });
+    // Pews (dark shapes at bottom)
+    ctx.fillStyle='rgba(20,15,5,0.8)';
+    [[50,H-100],[200,H-100],[350,H-100],[500,H-100],[650,H-100]].forEach(([px,py])=>{
+      ctx.fillRect(px,py,120,60);
+      ctx.fillRect(px,py-15,120,10); // pew back
+    });
+    // altar glow
+    const ag=ctx.createRadialGradient(W/2,H*0.5,0,W/2,H*0.5,200);
+    ag.addColorStop(0,'rgba(255,180,30,0.12)'); ag.addColorStop(1,'transparent');
+    ctx.fillStyle=ag; ctx.fillRect(0,0,W,H);
   },
-  'abyss': { 
-    gradient: 'radial-gradient(ellipse at center, #001515 0%, #000d0d 50%, #000505 100%)',
-    overlay: 'radial-gradient(circle at 50% 100%, rgba(0,150,150,0.06) 0%, transparent 60%)'
+
+  'abyss': (ctx, W, H) => {
+    ctx.fillStyle='#000508'; ctx.fillRect(0,0,W,H);
+    // Deep water caustics
+    for(let i=0;i<60;i++){
+      const x=Math.random()*W, y=Math.random()*H;
+      const r=10+Math.random()*40;
+      ctx.strokeStyle=`rgba(0,${80+Math.random()*80},${100+Math.random()*100},${0.05+Math.random()*0.1})`;
+      ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
+    }
+    // Depth rays from above
+    for(let r=0;r<8;r++){
+      const x=W*0.1+Math.random()*W*0.8;
+      const grad=ctx.createLinearGradient(x,0,x+30,H);
+      grad.addColorStop(0,'rgba(0,120,150,0.08)'); grad.addColorStop(1,'transparent');
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.moveTo(x-10,0); ctx.lineTo(x+10,0); ctx.lineTo(x+50,H); ctx.lineTo(x+30,H); ctx.fill();
+    }
+    // Dark silhouette of deep sea floor rocks
+    ctx.fillStyle='#000d10';
+    for(let i=0;i<10;i++){
+      const x=i*(W/9), h=40+Math.random()*80;
+      ctx.beginPath();
+      ctx.moveTo(x,H); ctx.lineTo(x+Math.random()*20,H-h); ctx.lineTo(x+50+Math.random()*20,H-h+20); ctx.lineTo(x+80,H);
+      ctx.fill();
+    }
+    // Bioluminescent dots
+    for(let i=0;i<30;i++){
+      const x=Math.random()*W, y=Math.random()*H;
+      const gd=ctx.createRadialGradient(x,y,0,x,y,8);
+      gd.addColorStop(0,'rgba(0,200,200,0.6)'); gd.addColorStop(1,'transparent');
+      ctx.fillStyle=gd; ctx.fillRect(x-8,y-8,16,16);
+    }
   },
-  'void': { 
-    gradient: 'radial-gradient(ellipse at center, #111 0%, #060606 60%, #000 100%)',
-    overlay: null
+
+  'void': (ctx, W, H) => {
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    // Subtle star field
+    for(let i=0;i<120;i++){
+      const x=Math.random()*W, y=Math.random()*H, r=Math.random()*1.2;
+      ctx.fillStyle=`rgba(255,255,255,${0.2+Math.random()*0.5})`;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+    // Faint galaxy swirl
+    for(let i=0;i<3;i++){
+      const cx=W*(0.2+i*0.3), cy=H*(0.3+Math.random()*0.4);
+      const nebg=ctx.createRadialGradient(cx,cy,0,cx,cy,80+i*40);
+      nebg.addColorStop(0,`rgba(${40+i*20},${20+i*15},${80+i*20},0.12)`); 
+      nebg.addColorStop(1,'transparent');
+      ctx.fillStyle=nebg; ctx.fillRect(cx-150,cy-150,300,300);
+    }
   }
 };
 
@@ -1073,14 +1318,11 @@ function setBg(key, el) {
   document.querySelectorAll('.bg-opt').forEach(o => o.classList.remove('active'));
   if(el) el.classList.add('active');
   const overlay = document.getElementById('bg-overlay');
-  const cfg = bgConfigs[key] || bgConfigs['none'];
-  if(!cfg.gradient) {
-    overlay.style.background = 'none';
-    overlay.style.opacity = '0';
-  } else {
-    const combined = cfg.overlay ? cfg.gradient + ', ' + cfg.overlay : cfg.gradient;
-    overlay.style.background = combined;
-    overlay.style.opacity = '1';
+  if(key==='none') {
+    overlay.style.backgroundImage='none';
+    overlay.style.background='none';
+  } else if(bgDrawers[key]) {
+    drawBgCanvas(bgDrawers[key]);
   }
   document.getElementById('bg-picker').classList.remove('show');
   showNotif('🖼 BACKGROUND SET');
