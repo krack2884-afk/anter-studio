@@ -792,46 +792,111 @@ function drawRorschach() {
 
   ctx.restore(); // end mask clip
 
-  // --- SEWN MOUTH ---
-  // Rorschach has a SEWN SHUT mouth — thick thread, vertical stitches pulling lips together
+  // --- STAPLE / HOOK MOUTH (matching Tyler's real mask) ---
+  // Heavy metal staples through the lips, slightly open mouth, bloody flesh pulling
   const mouthCY = cy + ry * 0.52;
-  const mouthW  = rx * 0.38;
+  const mouthW  = rx * 0.36;
+  const lipGap  = ry * 0.04; // lips slightly parted
 
-  // Lip line (horizontal seam where lips meet)
   ctx.save();
-  ctx.strokeStyle = '#1a0f08';
-  ctx.lineWidth = 2.5;
+
+  // Upper lip
+  ctx.strokeStyle = 'rgba(20,10,8,0.9)';
+  ctx.lineWidth = 2;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(cx - mouthW, mouthCY);
-  ctx.bezierCurveTo(cx - mouthW*0.5, mouthCY + rx*0.02, cx + mouthW*0.5, mouthCY + rx*0.02, cx + mouthW, mouthCY);
+  ctx.moveTo(cx - mouthW, mouthCY - lipGap);
+  ctx.bezierCurveTo(cx - mouthW*0.4, mouthCY - lipGap - ry*0.025,
+                    cx + mouthW*0.4, mouthCY - lipGap - ry*0.025,
+                    cx + mouthW, mouthCY - lipGap);
   ctx.stroke();
 
-  // Vertical stitches — thick thread pulled tight, perpendicular to the seam
-  const stitchCount = 7;
-  ctx.strokeStyle = '#0d0805';
-  ctx.lineWidth = 1.8;
-  for(let i = 0; i < stitchCount; i++) {
-    const sx = cx - mouthW + (i / (stitchCount-1)) * mouthW * 2;
-    const topY  = mouthCY - rx * 0.065;
-    const botY  = mouthCY + rx * 0.065;
-    // main stitch thread
+  // Lower lip
+  ctx.beginPath();
+  ctx.moveTo(cx - mouthW, mouthCY + lipGap);
+  ctx.bezierCurveTo(cx - mouthW*0.4, mouthCY + lipGap + ry*0.03,
+                    cx + mouthW*0.4, mouthCY + lipGap + ry*0.03,
+                    cx + mouthW, mouthCY + lipGap);
+  ctx.stroke();
+
+  // Dark mouth opening (gap between lips)
+  ctx.fillStyle = 'rgba(5,2,2,0.85)';
+  ctx.beginPath();
+  ctx.moveTo(cx - mouthW, mouthCY - lipGap);
+  ctx.bezierCurveTo(cx - mouthW*0.4, mouthCY - lipGap - ry*0.025,
+                    cx + mouthW*0.4, mouthCY - lipGap - ry*0.025,
+                    cx + mouthW, mouthCY - lipGap);
+  ctx.lineTo(cx + mouthW, mouthCY + lipGap);
+  ctx.bezierCurveTo(cx + mouthW*0.4, mouthCY + lipGap + ry*0.03,
+                    cx - mouthW*0.4, mouthCY + lipGap + ry*0.03,
+                    cx - mouthW, mouthCY + lipGap);
+  ctx.closePath();
+  ctx.fill();
+
+  // STAPLES — thick U-shaped metal hooks going through both lips
+  const stapleCount = 6;
+  for(let i = 0; i < stapleCount; i++) {
+    const sx = cx - mouthW * 0.85 + (i / (stapleCount - 1)) * mouthW * 1.7;
+    const topPin = mouthCY - lipGap - ry * 0.05;
+    const botPin = mouthCY + lipGap + ry * 0.05;
+    const stapleW = rx * 0.04;
+
+    // Metal staple body — silver/steel color
+    const metalGrad = ctx.createLinearGradient(sx - stapleW, topPin, sx + stapleW, botPin);
+    metalGrad.addColorStop(0, '#aaa9a5');
+    metalGrad.addColorStop(0.4, '#e0ddd8');
+    metalGrad.addColorStop(0.6, '#c8c5be');
+    metalGrad.addColorStop(1, '#888580');
+
+    ctx.strokeStyle = metalGrad;
+    ctx.lineWidth = rx * 0.028;
+    ctx.lineCap = 'round';
+
+    // Left pin of staple
     ctx.beginPath();
-    ctx.moveTo(sx, topY);
-    ctx.lineTo(sx, botY);
+    ctx.moveTo(sx - stapleW, topPin);
+    ctx.lineTo(sx - stapleW, botPin);
     ctx.stroke();
-    // tiny horizontal cross at top and bottom (like real thread knots)
-    ctx.lineWidth = 1.2;
+
+    // Right pin of staple
     ctx.beginPath();
-    ctx.moveTo(sx - 3, topY);
-    ctx.lineTo(sx + 3, topY);
+    ctx.moveTo(sx + stapleW, topPin);
+    ctx.lineTo(sx + stapleW, botPin);
     ctx.stroke();
+
+    // Top bar connecting the two pins
     ctx.beginPath();
-    ctx.moveTo(sx - 3, botY);
-    ctx.lineTo(sx + 3, botY);
+    ctx.moveTo(sx - stapleW, topPin);
+    ctx.lineTo(sx + stapleW, topPin);
     ctx.stroke();
-    ctx.lineWidth = 1.8;
+
+    // Bloody torn flesh around each staple entry point
+    ctx.fillStyle = 'rgba(120, 15, 15, 0.55)';
+    ctx.beginPath(); ctx.arc(sx - stapleW, topPin, rx*0.018, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + stapleW, topPin, rx*0.018, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx - stapleW, botPin, rx*0.018, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + stapleW, botPin, rx*0.018, 0, Math.PI*2); ctx.fill();
+
+    // Blood drip from bottom pin on some staples
+    if(i % 2 === 0) {
+      const dripLen = ry * (0.04 + 0.03 * Math.sin(t * 0.3 + i));
+      const dripGrad = ctx.createLinearGradient(sx, botPin, sx, botPin + dripLen);
+      dripGrad.addColorStop(0, 'rgba(120,10,10,0.7)');
+      dripGrad.addColorStop(1, 'rgba(80,5,5,0)');
+      ctx.strokeStyle = dripGrad;
+      ctx.lineWidth = rx * 0.012;
+      ctx.beginPath();
+      ctx.moveTo(sx, botPin);
+      ctx.lineTo(sx, botPin + dripLen);
+      ctx.stroke();
+    }
   }
+
+  // Dark eye socket shadows (matching your look)
+  ctx.fillStyle = 'rgba(8,4,4,0.55)';
+  ctx.beginPath(); ctx.ellipse(cx - rx*0.32, cy - ry*0.08, rx*0.22, ry*0.18, -0.15, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + rx*0.32, cy - ry*0.08, rx*0.22, ry*0.18, 0.15, 0, Math.PI*2); ctx.fill();
+
   ctx.restore();
 
   rorschachFrame = requestAnimationFrame(drawRorschach);
