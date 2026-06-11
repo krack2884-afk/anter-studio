@@ -669,234 +669,173 @@ function stopRorschach() {
 function drawRorschach() {
   if(!rorschachActive) return;
   const canvas = document.getElementById('rorschach-canvas');
-  const W = canvas.width = canvas.offsetWidth;
+  const W = canvas.width  = canvas.offsetWidth;
   const H = canvas.height = canvas.offsetHeight;
   const ctx = canvas.getContext('2d');
-  rorschachPhase += 0.011;
+  rorschachPhase += 0.006;
   const t = rorschachPhase;
 
   ctx.clearRect(0,0,W,H);
 
-  // ── FACE DIMENSIONS ──────────────────────────────────────
-  const cx  = W * 0.5;
-  const cy  = H * 0.27;
-  const rx  = W * 0.16;
-  const ry  = H * 0.235;
+  // ── FACE BOUNDS ───────────────────────────────────────────
+  const cx = W * 0.5;
+  const cy = H * 0.27;
+  const rx = W * 0.155;
+  const ry = H * 0.235;
 
-  // ── 1. SKIN BASE — weathered, rough, not clean white ─────
+  // ── PERLIN-STYLE NOISE (sum of harmonics = smooth fluid) ──
+  function noise(x, y, t) {
+    // Multiple octaves of sin/cos = pseudo-perlin, very smooth
+    return (
+      Math.sin(x * 2.1 + t * 1.1) * Math.cos(y * 1.8 - t * 0.9) * 0.35 +
+      Math.sin(x * 3.7 - t * 1.4 + y * 2.2) * 0.25 +
+      Math.cos(x * 1.3 + y * 3.1 + t * 0.7) * 0.2  +
+      Math.sin(x * 5.2 + t * 2.1 - y * 1.5) * 0.12 +
+      Math.cos(x * 0.8 - y * 4.3 + t * 1.6) * 0.08
+    );
+  }
+
+  // ── RENDER FLUID INK ON MASK VIA PIXEL SAMPLING ───────────
+  // Use an offscreen canvas at reduced resolution for speed
+  const RES = 3; // sample every 3px
+  const cols = Math.ceil(rx * 2 / RES);
+  const rows = Math.ceil(ry * 2 / RES);
+
+  for(let row = 0; row <= rows; row++) {
+    for(let col = 0; col <= cols; col++) {
+      // map col/row to face-relative coords
+      const fx = (col / cols) - 0.5;  // -0.5 to 0.5
+      const fy = (row / rows) - 0.5;
+
+      // skip pixels outside the ellipse
+      if((fx*fx)/(0.5*0.5) + (fy*fy)/(0.5*0.5) > 1) continue;
+
+      // actual pixel position
+      const px = cx + fx * rx * 2;
+      const py = cy + fy * ry * 2;
+
+      // SYMMETRY: fold left half onto right (mirror x)
+      const sfx = Math.abs(fx) * 2.2; // 0..1.1
+      const sfy = fy * 2.0;           // -1..1
+
+      // noise value at this point
+      const n = noise(sfx * 2.8, sfy * 2.8, t);
+
+      // threshold: above 0 = black ink, below = white mask
+      const isInk = n > 0.05;
+
+      // edge softness — feather near ellipse boundary
+      const edgeDist = 1 - Math.sqrt((fx*fx + fy*fy) / 0.25);
+      const alpha = Math.min(1, edgeDist * 4);
+
+      if(isInk) {
+        ctx.fillStyle = `rgba(6,3,1,${0.92 * alpha})`;
+      } else {
+        ctx.fillStyle = `rgba(220,210,190,${0.88 * alpha})`;
+      }
+
+      ctx.fillRect(px - RES/2, py - RES/2, RES + 1, RES + 1);
+    }
+  }
+
+  // ── MASK EDGE — dark oval border ─────────────────────────
   ctx.save();
+  // Outer shadow ring
+  const edgeGrad = ctx.createRadialGradient(cx, cy, rx * 0.75, cx, cy, rx * 1.05);
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(0,0,0,0.65)');
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  const skinGrad = ctx.createRadialGradient(cx - rx*0.1, cy - ry*0.15, rx*0.05, cx, cy, rx*1.05);
-  skinGrad.addColorStop(0,  '#d4c9b0');
-  skinGrad.addColorStop(0.5,'#b8aa90');
-  skinGrad.addColorStop(1,  '#8a7d65');
-  ctx.fillStyle = skinGrad;
+  ctx.ellipse(cx, cy, rx * 1.05, ry * 1.05, 0, 0, Math.PI*2);
+  ctx.fillStyle = edgeGrad;
   ctx.fill();
   ctx.restore();
 
-  // ── 2. FOREHEAD SHADOW / RED BANDANA BOTTOM EDGE ─────────
+  // ── STAPLE MOUTH ─────────────────────────────────────────
+  const mouthCY = cy + ry * 0.54;
+  const mouthW  = rx * 0.36;
+  const lipGap  = ry * 0.036;
+
   ctx.save();
+
+  // Clip staples to face area
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
   ctx.clip();
-  // dark top — where bandana meets forehead
-  const bandShadow = ctx.createLinearGradient(0, cy - ry, 0, cy - ry*0.4);
-  bandShadow.addColorStop(0,'rgba(60,10,10,0.85)');
-  bandShadow.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = bandShadow;
-  ctx.fillRect(0, cy - ry, W, ry*0.65);
-  // bandana fabric peeking at very top
-  ctx.fillStyle = 'rgba(140,20,20,0.6)';
-  ctx.fillRect(0, cy - ry, W, ry*0.12);
-  ctx.restore();
 
-  // ── 3. HEAVY DARK EYE SOCKETS (like your makeup) ─────────
-  ctx.save();
+  // Lip seam
+  ctx.strokeStyle = 'rgba(10,5,3,0.85)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.clip();
-  // left socket
-  const lEye = ctx.createRadialGradient(cx-rx*0.31, cy-ry*0.05, 2, cx-rx*0.31, cy-ry*0.05, rx*0.27);
-  lEye.addColorStop(0,'rgba(0,0,0,0.98)');
-  lEye.addColorStop(0.6,'rgba(8,3,3,0.85)');
-  lEye.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = lEye;
-  ctx.beginPath(); ctx.ellipse(cx-rx*0.31, cy-ry*0.05, rx*0.27, ry*0.22, -0.1, 0, Math.PI*2); ctx.fill();
-  // right socket
-  const rEye = ctx.createRadialGradient(cx+rx*0.31, cy-ry*0.05, 2, cx+rx*0.31, cy-ry*0.05, rx*0.27);
-  rEye.addColorStop(0,'rgba(0,0,0,0.98)');
-  rEye.addColorStop(0.6,'rgba(8,3,3,0.85)');
-  rEye.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = rEye;
-  ctx.beginPath(); ctx.ellipse(cx+rx*0.31, cy-ry*0.05, rx*0.27, ry*0.22, 0.1, 0, Math.PI*2); ctx.fill();
-  // whites of eyes — small, intense
-  ctx.fillStyle = 'rgba(220,215,200,0.9)';
-  ctx.beginPath(); ctx.ellipse(cx-rx*0.31, cy-ry*0.04, rx*0.09, ry*0.07, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx+rx*0.31, cy-ry*0.04, rx*0.09, ry*0.07, 0, 0, Math.PI*2); ctx.fill();
-  // pupils
-  ctx.fillStyle = 'rgba(5,3,3,0.95)';
-  ctx.beginPath(); ctx.ellipse(cx-rx*0.31, cy-ry*0.04, rx*0.045, ry*0.045, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx+rx*0.31, cy-ry*0.04, rx*0.045, ry*0.045, 0, 0, Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  // ── 4. NOSE BRIDGE / CHEEK SHADOWS ───────────────────────
-  ctx.save();
+  ctx.moveTo(cx - mouthW, mouthCY);
+  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY - lipGap, cx + mouthW*0.3, mouthCY - lipGap, cx + mouthW, mouthCY);
+  ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.clip();
-  // nose bridge darkening
-  const noseShadow = ctx.createLinearGradient(cx-rx*0.08, cy, cx+rx*0.08, cy);
-  noseShadow.addColorStop(0,'rgba(0,0,0,0)');
-  noseShadow.addColorStop(0.5,'rgba(30,20,10,0.3)');
-  noseShadow.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = noseShadow;
-  ctx.fillRect(cx-rx*0.1, cy-ry*0.1, rx*0.2, ry*0.4);
-  // cheek hollows
-  ctx.fillStyle='rgba(0,0,0,0.25)';
-  ctx.beginPath(); ctx.ellipse(cx-rx*0.62, cy+ry*0.1, rx*0.2, ry*0.15, 0.3, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx+rx*0.62, cy+ry*0.1, rx*0.2, ry*0.15, -0.3, 0, Math.PI*2); ctx.fill();
-  ctx.restore();
+  ctx.moveTo(cx - mouthW, mouthCY);
+  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY + lipGap, cx + mouthW*0.3, mouthCY + lipGap, cx + mouthW, mouthCY);
+  ctx.stroke();
 
-  // ── 5. MORPHING INK BLOTS (Rorschach pattern, on the face) 
-  ctx.save();
+  // Dark gap between lips
+  ctx.fillStyle = 'rgba(4,2,1,0.9)';
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx*0.95, ry*0.95, 0, 0, Math.PI*2);
-  ctx.clip();
-
-  function inkBlot(bx, by, size, ph, pts) {
-    const baseY = cy + by * ry;
-    [1, -1].forEach(side => {
-      if(bx === 0 && side === -1) return;
-      const ox = cx + side * bx * rx;
-      const ptArr = [];
-      for(let i=0;i<pts;i++){
-        const ang = (i/pts)*Math.PI*2;
-        const r = size * (
-          0.5 +
-          0.2*Math.sin(ang*2 + ph*1.3) +
-          0.13*Math.sin(ang*3 + ph*0.7+1.2) +
-          0.09*Math.cos(ang*5 + ph*1.9) +
-          0.05*Math.sin(ang*1 + ph*0.4+2.1) +
-          0.04*Math.cos(ang*7 + ph*2.3)
-        );
-        ptArr.push([ox + Math.cos(ang)*r*rx, baseY + Math.sin(ang)*r*ry*0.8]);
-      }
-      ctx.beginPath();
-      ctx.moveTo((ptArr[0][0]+ptArr[ptArr.length-1][0])/2,(ptArr[0][1]+ptArr[ptArr.length-1][1])/2);
-      for(let i=0;i<ptArr.length;i++){
-        const p1=ptArr[i], p2=ptArr[(i+1)%ptArr.length];
-        ctx.quadraticCurveTo(p1[0],p1[1],(p1[0]+p2[0])/2,(p1[1]+p2[1])/2);
-      }
-      ctx.closePath();
-      ctx.fill();
-    });
-  }
-
-  // Ink blots — dark brown-black, like aged ink on skin
-  ctx.fillStyle = 'rgba(12,7,3,0.82)';
-  inkBlot(0,   -0.30, 0.11+0.03*Math.sin(t*1.1),   t,      13); // top center
-  inkBlot(0.30,-0.20, 0.15+0.04*Math.sin(t*1.7),   t*1.2,  16); // upper wings
-  inkBlot(0,    0.00, 0.19+0.04*Math.sin(t*0.9),   t*0.8,  18); // center body
-  inkBlot(0.40, 0.05, 0.13+0.03*Math.sin(t*2.1),   t*1.5,  12); // side arms
-  inkBlot(0.20, 0.27, 0.12+0.04*Math.sin(t*1.2),   t*0.9,  14); // lower lobes
-  inkBlot(0,    0.44, 0.09+0.03*Math.sin(t*1.4),   t*1.1,  10); // bottom anchor
-  ctx.fillStyle = 'rgba(12,7,3,0.6)';
-  inkBlot(0.13,-0.09+0.02*Math.sin(t*2), 0.06+0.02*Math.sin(t*2.5), t*1.8, 10);
-  inkBlot(0.26, 0.16+0.03*Math.sin(t*1.9),0.055+0.02*Math.cos(t*2.2),t*2,  8);
-
-  ctx.restore();
-
-  // ── 6. STAPLE MOUTH (matching Tyler's real mask) ──────────
-  const mouthCY = cy + ry * 0.535;
-  const mouthW  = rx * 0.37;
-  const lipGap  = ry * 0.038;
-
-  ctx.save();
-
-  // Dark mouth void
-  ctx.fillStyle = 'rgba(4,2,1,0.92)';
-  ctx.beginPath();
-  ctx.moveTo(cx - mouthW, mouthCY - lipGap*0.5);
-  ctx.bezierCurveTo(cx-mouthW*0.3, mouthCY-lipGap*0.8, cx+mouthW*0.3, mouthCY-lipGap*0.8, cx+mouthW, mouthCY-lipGap*0.5);
-  ctx.lineTo(cx+mouthW, mouthCY+lipGap*0.5);
-  ctx.bezierCurveTo(cx+mouthW*0.3, mouthCY+lipGap*1.1, cx-mouthW*0.3, mouthCY+lipGap*1.1, cx-mouthW, mouthCY+lipGap*0.5);
+  ctx.moveTo(cx - mouthW, mouthCY);
+  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY - lipGap, cx + mouthW*0.3, mouthCY - lipGap, cx + mouthW, mouthCY);
+  ctx.bezierCurveTo(cx + mouthW*0.3, mouthCY + lipGap, cx - mouthW*0.3, mouthCY + lipGap, cx - mouthW, mouthCY);
   ctx.closePath();
   ctx.fill();
 
-  // Lip edge lines
-  ctx.strokeStyle = 'rgba(25,12,8,0.9)';
-  ctx.lineWidth = 1.8;
-  ctx.lineCap = 'round';
-  // upper lip
-  ctx.beginPath();
-  ctx.moveTo(cx-mouthW, mouthCY-lipGap*0.5);
-  ctx.bezierCurveTo(cx-mouthW*0.3, mouthCY-lipGap*0.8, cx+mouthW*0.3, mouthCY-lipGap*0.8, cx+mouthW, mouthCY-lipGap*0.5);
-  ctx.stroke();
-  // lower lip
-  ctx.beginPath();
-  ctx.moveTo(cx-mouthW, mouthCY+lipGap*0.5);
-  ctx.bezierCurveTo(cx-mouthW*0.3, mouthCY+lipGap*1.1, cx+mouthW*0.3, mouthCY+lipGap*1.1, cx+mouthW, mouthCY+lipGap*0.5);
-  ctx.stroke();
-
-  // ── STAPLES — thick U-shaped metal, exactly like the photo ─
+  // 6 metal staples
   const numStaples = 6;
-  for(let i=0; i<numStaples; i++){
-    const prog = i/(numStaples-1);
-    const sx   = cx - mouthW*0.88 + prog * mouthW*1.76;
-    const sw   = rx * 0.032; // staple width
-    const topY = mouthCY - lipGap - ry*0.055;
-    const botY = mouthCY + lipGap + ry*0.055;
+  for(let i = 0; i < numStaples; i++) {
+    const sx  = cx - mouthW * 0.86 + (i / (numStaples-1)) * mouthW * 1.72;
+    const sw  = rx * 0.03;
+    const topY = mouthCY - lipGap - ry * 0.052;
+    const botY = mouthCY + lipGap + ry * 0.052;
 
     // steel gradient
-    const stG = ctx.createLinearGradient(sx-sw, 0, sx+sw, 0);
-    stG.addColorStop(0,   '#707070');
-    stG.addColorStop(0.3, '#d8d8d2');
-    stG.addColorStop(0.5, '#f0eeea');
-    stG.addColorStop(0.7, '#c0beb8');
-    stG.addColorStop(1,   '#606060');
+    const sg = ctx.createLinearGradient(sx-sw, 0, sx+sw, 0);
+    sg.addColorStop(0,   '#606060');
+    sg.addColorStop(0.35,'#e0ddd8');
+    sg.addColorStop(0.5, '#f5f3f0');
+    sg.addColorStop(0.65,'#c0bdb8');
+    sg.addColorStop(1,   '#585858');
 
-    ctx.strokeStyle = stG;
-    ctx.lineWidth   = rx * 0.03;
+    ctx.strokeStyle = sg;
+    ctx.lineWidth   = rx * 0.028;
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
 
-    // Draw full U staple in one path
+    // U-shape staple
     ctx.beginPath();
-    ctx.moveTo(sx-sw, topY);
-    ctx.lineTo(sx-sw, botY);
-    ctx.lineTo(sx+sw, botY);
-    ctx.lineTo(sx+sw, topY);
+    ctx.moveTo(sx - sw, topY);
+    ctx.lineTo(sx - sw, botY);
+    ctx.lineTo(sx + sw, botY);
+    ctx.lineTo(sx + sw, topY);
+    ctx.stroke();
+    // top bar
+    ctx.beginPath();
+    ctx.moveTo(sx - sw, topY);
+    ctx.lineTo(sx + sw, topY);
     ctx.stroke();
 
-    // top crossbar
-    ctx.beginPath();
-    ctx.moveTo(sx-sw, topY);
-    ctx.lineTo(sx+sw, topY);
-    ctx.stroke();
-
-    // torn flesh / blood at pierce points — 4 corners of each staple
-    [[sx-sw,topY],[sx+sw,topY],[sx-sw,botY],[sx+sw,botY]].forEach(([px,py])=>{
-      // bruised flesh ring
-      const bRing = ctx.createRadialGradient(px,py,0,px,py,rx*0.025);
-      bRing.addColorStop(0,'rgba(150,20,10,0.75)');
-      bRing.addColorStop(0.5,'rgba(100,10,5,0.45)');
-      bRing.addColorStop(1,'rgba(80,5,2,0)');
-      ctx.fillStyle = bRing;
-      ctx.beginPath(); ctx.arc(px,py,rx*0.025,0,Math.PI*2); ctx.fill();
+    // blood at pierce points
+    [[sx-sw,topY],[sx+sw,topY],[sx-sw,botY],[sx+sw,botY]].forEach(([px,py]) => {
+      const bg = ctx.createRadialGradient(px,py,0,px,py,rx*0.022);
+      bg.addColorStop(0,'rgba(160,18,8,0.8)');
+      bg.addColorStop(0.5,'rgba(100,8,4,0.4)');
+      bg.addColorStop(1,'rgba(70,3,1,0)');
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.arc(px,py,rx*0.022,0,Math.PI*2); ctx.fill();
     });
 
-    // blood drip on lower points (alternating, slightly animated)
-    if(i%2===0){
-      const dLen = ry*(0.05+0.025*Math.sin(t*0.35+i*1.1));
-      [[sx-sw,botY],[sx+sw,botY]].forEach(([dx,dy])=>{
-        const dG = ctx.createLinearGradient(dx,dy,dx,dy+dLen);
-        dG.addColorStop(0,'rgba(160,15,8,0.8)');
-        dG.addColorStop(0.6,'rgba(100,8,4,0.4)');
-        dG.addColorStop(1,'rgba(80,5,2,0)');
-        ctx.strokeStyle=dG; ctx.lineWidth=rx*0.009;
-        ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(dx,dy+dLen); ctx.stroke();
-      });
+    // blood drip (alternating, slow pulse)
+    if(i % 2 === 0) {
+      const dLen = ry * (0.055 + 0.02*Math.sin(t*0.4 + i));
+      const dg = ctx.createLinearGradient(sx,botY,sx,botY+dLen);
+      dg.addColorStop(0,'rgba(150,12,6,0.75)');
+      dg.addColorStop(1,'rgba(80,4,2,0)');
+      ctx.strokeStyle = dg; ctx.lineWidth = rx*0.01;
+      ctx.beginPath(); ctx.moveTo(sx,botY); ctx.lineTo(sx,botY+dLen); ctx.stroke();
     }
   }
 
@@ -904,6 +843,7 @@ function drawRorschach() {
 
   rorschachFrame = requestAnimationFrame(drawRorschach);
 }
+
 
 
 function drawTextMask(label, color1, color2, stitched) {
