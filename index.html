@@ -694,80 +694,146 @@ function drawRorschach() {
   const W = canvas.width = canvas.offsetWidth;
   const H = canvas.height = canvas.offsetHeight;
   const ctx = canvas.getContext('2d');
-  rorschachPhase += 0.018;
+  rorschachPhase += 0.012;
   const t = rorschachPhase;
 
-  // White mask base — oval covering face area
-  const cx = W * 0.5, cy = H * 0.28;
-  const rx = W * 0.18, ry = H * 0.26;
-
   ctx.clearRect(0,0,W,H);
-  
-  // Draw white oval mask
+
+  // Face center and size
+  const cx = W * 0.5;
+  const cy = H * 0.26;
+  const rx = W * 0.155;
+  const ry = H * 0.24;
+
+  // --- WHITE MASK BASE ---
   ctx.save();
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.fillStyle = '#f0ede8';
+  const maskGrad = ctx.createRadialGradient(cx - rx*0.15, cy - ry*0.2, rx*0.1, cx, cy, rx*1.1);
+  maskGrad.addColorStop(0, '#f8f5f0');
+  maskGrad.addColorStop(0.7, '#ede8e0');
+  maskGrad.addColorStop(1, '#d8d0c0');
+  ctx.fillStyle = maskGrad;
   ctx.fill();
+  // Subtle edge shadow
+  ctx.strokeStyle = 'rgba(80,70,55,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.restore();
 
-  // Clip to mask shape for ink blots
+  // Clip ALL ink to inside the mask
   ctx.save();
   ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  ctx.ellipse(cx, cy, rx * 0.96, ry * 0.96, 0, 0, Math.PI*2);
   ctx.clip();
 
-  // Draw morphing ink blots (symmetric — mirrored left/right like real Rorschach)
-  ctx.fillStyle = 'rgba(10,8,5,0.88)';
+  // --- INK BLOT RENDERING ---
+  // Each blot is a bezier/spline shape, mirrored symmetrically
+  // Uses perlin-like noise via sin/cos combos for organic morphing
   
-  const blots = [
-    // center blot
-    { bx: 0, by: -0.05, size: 0.045 + 0.02*Math.sin(t*1.3) },
-    // upper pair
-    { bx: 0.055 + 0.02*Math.sin(t*0.9), by: -0.12 + 0.015*Math.cos(t*1.1), size: 0.035 + 0.015*Math.sin(t*1.7) },
-    // mid pair
-    { bx: 0.07 + 0.025*Math.sin(t*1.2), by: 0.04 + 0.02*Math.sin(t*0.7), size: 0.05 + 0.02*Math.cos(t*1.4) },
-    // lower pair
-    { bx: 0.04 + 0.015*Math.cos(t*1.6), by: 0.14 + 0.02*Math.sin(t*0.8), size: 0.04 + 0.015*Math.sin(t*2.1) },
-    // outer pair
-    { bx: 0.1 + 0.02*Math.sin(t*0.6), by: -0.04 + 0.025*Math.cos(t*1.3), size: 0.03 + 0.01*Math.sin(t*1.9) },
-  ];
+  function inkBlot(bx, by, size, phase, points) {
+    // bx, by = offset from center as fraction of rx/ry
+    // Draw right side, then mirror to left
+    const baseX = cx + bx * rx;
+    const baseY = cy + by * ry;
+    const mirrorX = cx - bx * rx;
 
-  blots.forEach(b => {
-    const sz = b.size * rx;
-    // right side
-    const bx = cx + b.bx * rx;
-    const by = cy + b.by * ry;
-    ctx.beginPath();
-    ctx.arc(bx, by, sz, 0, Math.PI*2);
-    // add organic wobble via bezier
-    ctx.fill();
-    // mirror left side
-    if(b.bx !== 0) {
+    [1, -1].forEach(side => {
+      if(bx === 0 && side === -1) return; // center: only draw once
+      const ox = side === 1 ? baseX : mirrorX;
       ctx.beginPath();
-      ctx.arc(cx - b.bx * rx, by, sz, 0, Math.PI*2);
+      const pts = [];
+      for(let i = 0; i < points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        // Organic radius with multiple harmonics
+        const r = size * (
+          0.5 +
+          0.18 * Math.sin(angle * 2 + phase * 1.3) +
+          0.12 * Math.sin(angle * 3 + phase * 0.7 + 1.2) +
+          0.08 * Math.cos(angle * 5 + phase * 1.8) +
+          0.06 * Math.sin(angle * 1 + phase * 0.4 + 2.1) +
+          0.04 * Math.cos(angle * 7 + phase * 2.2)
+        );
+        const px = ox + Math.cos(angle) * r * rx;
+        const py = baseY + Math.sin(angle) * r * ry * 0.85;
+        pts.push([px, py]);
+      }
+      // Smooth bezier through points
+      ctx.moveTo((pts[0][0]+pts[pts.length-1][0])/2, (pts[0][1]+pts[pts.length-1][1])/2);
+      for(let i = 0; i < pts.length; i++) {
+        const p1 = pts[i];
+        const p2 = pts[(i+1) % pts.length];
+        ctx.quadraticCurveTo(p1[0], p1[1], (p1[0]+p2[0])/2, (p1[1]+p2[1])/2);
+      }
+      ctx.closePath();
       ctx.fill();
-    }
-  });
-
-  // sewn lips — stitched line across mouth
-  const mouthY = cy + ry * 0.45;
-  ctx.strokeStyle = '#1a1008';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(cx - rx*0.25, mouthY);
-  ctx.lineTo(cx + rx*0.25, mouthY);
-  ctx.stroke();
-  // stitches
-  for(let i = -3; i <= 3; i++) {
-    const sx = cx + (i * rx * 0.09);
-    ctx.beginPath();
-    ctx.moveTo(sx, mouthY - rx*0.04);
-    ctx.lineTo(sx, mouthY + rx*0.04);
-    ctx.stroke();
+    });
   }
 
+  ctx.fillStyle = 'rgba(8,5,2,0.92)';
+
+  // --- MAIN INK BLOTS (Rorschach-authentic layout) ---
+  // Center top blot
+  inkBlot(0, -0.28, 0.13 + 0.03*Math.sin(t*1.1), t, 14);
+  // Upper wing pair
+  inkBlot(0.32 + 0.04*Math.sin(t*0.8), -0.18 + 0.03*Math.cos(t*1.4), 0.16 + 0.04*Math.sin(t*1.7), t*1.2, 16);
+  // Center body blob
+  inkBlot(0, 0.02, 0.2 + 0.04*Math.sin(t*0.9), t*0.8, 18);
+  // Side arm extensions
+  inkBlot(0.42 + 0.03*Math.cos(t*1.1), 0.05 + 0.04*Math.sin(t*1.3), 0.14 + 0.03*Math.sin(t*2.1), t*1.5, 12);
+  // Lower lobe pair
+  inkBlot(0.22 + 0.04*Math.sin(t*1.6), 0.25 + 0.03*Math.cos(t*0.9), 0.13 + 0.04*Math.sin(t*1.2), t*0.9, 14);
+  // Bottom anchor
+  inkBlot(0, 0.42, 0.1 + 0.03*Math.sin(t*1.4), t*1.1, 10);
+  // Inner detail blots (small, high frequency morph)
+  ctx.fillStyle = 'rgba(8,5,2,0.75)';
+  inkBlot(0.14, -0.08 + 0.02*Math.sin(t*2), 0.07 + 0.02*Math.sin(t*2.5), t*1.8, 10);
+  inkBlot(0.28, 0.15 + 0.03*Math.sin(t*1.9), 0.06 + 0.02*Math.cos(t*2.2), t*2, 8);
+
+  ctx.restore(); // end mask clip
+
+  // --- SEWN MOUTH ---
+  // Rorschach has a SEWN SHUT mouth — thick thread, vertical stitches pulling lips together
+  const mouthCY = cy + ry * 0.52;
+  const mouthW  = rx * 0.38;
+
+  // Lip line (horizontal seam where lips meet)
+  ctx.save();
+  ctx.strokeStyle = '#1a0f08';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - mouthW, mouthCY);
+  ctx.bezierCurveTo(cx - mouthW*0.5, mouthCY + rx*0.02, cx + mouthW*0.5, mouthCY + rx*0.02, cx + mouthW, mouthCY);
+  ctx.stroke();
+
+  // Vertical stitches — thick thread pulled tight, perpendicular to the seam
+  const stitchCount = 7;
+  ctx.strokeStyle = '#0d0805';
+  ctx.lineWidth = 1.8;
+  for(let i = 0; i < stitchCount; i++) {
+    const sx = cx - mouthW + (i / (stitchCount-1)) * mouthW * 2;
+    const topY  = mouthCY - rx * 0.065;
+    const botY  = mouthCY + rx * 0.065;
+    // main stitch thread
+    ctx.beginPath();
+    ctx.moveTo(sx, topY);
+    ctx.lineTo(sx, botY);
+    ctx.stroke();
+    // tiny horizontal cross at top and bottom (like real thread knots)
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(sx - 3, topY);
+    ctx.lineTo(sx + 3, topY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sx - 3, botY);
+    ctx.lineTo(sx + 3, botY);
+    ctx.stroke();
+    ctx.lineWidth = 1.8;
+  }
   ctx.restore();
+
   rorschachFrame = requestAnimationFrame(drawRorschach);
 }
 
