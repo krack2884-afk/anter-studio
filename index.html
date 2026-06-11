@@ -93,8 +93,23 @@
   #notif { position:fixed; top:60px; right:16px; background:var(--gold); color:#000; padding:10px 18px; border-radius:6px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; opacity:0; transition:opacity 0.3s; z-index:999; pointer-events:none; }
   #notif.show { opacity:1; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body>
+
+<!-- SVG TURBULENCE ENGINE — never visible, used as pixel source only -->
+<svg id="svg-engine" xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden;">
+  <defs>
+    <filter id="ink-filter" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="linearRGB">
+      <feTurbulence id="ror-turb" type="turbulence" baseFrequency="0.04 0.032" numOctaves="5" seed="3"/>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0 1
+                0 0 20 -8 1"/>
+    </filter>
+  </defs>
+</svg>
 
 <div id="nav">
   <div class="logo">ANTER</div>
@@ -108,7 +123,7 @@
 <div id="studio" class="panel active">
   <div id="bg-overlay"></div>
   <canvas id="rorschach-canvas"></canvas>
-  <div id="outfit-overlay"><img id="mask-layer" src=""/></div>
+  
   <video id="bg-video-el" autoplay muted loop playsinline></video>
   <video id="cam" autoplay muted playsinline></video>
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
@@ -647,224 +662,237 @@ function toggleCloset() {
   document.getElementById('bg-picker').classList.remove('show');
 }
 
-// ---- Rorschach morphing ink blot engine ----
-let rorschachActive = false;
-let rorschachFrame = null;
-let rorschachPhase = 0;
+// ---- Rorschach Engine v3 — SVG Turbulence + Face Tracking ----
+const ROR_MODEL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+let rorActive   = false;
+let rorAnimId   = null;
+let rorFaceBox  = null;
+let rorAnimT    = 0;
+let rorModelLoaded = false;
+let rorLastFaceTime = 0;
+let rorOffCanvas= null, rorOffCtx = null;
+let rorFullCanvas=null, rorFullCtx= null;
+
+const rorTurb   = document.getElementById('ror-turb');
+const rorCanvas = document.getElementById('rorschach-canvas');
+const rorCtx    = rorCanvas ? rorCanvas.getContext('2d') : null;
+
+// Load face-api model once
+async function rorLoadFaceModel() {
+  if(rorModelLoaded) return;
+  try {
+    await faceapi.nets.tinyFaceDetector.loadFromUri(ROR_MODEL);
+    rorModelLoaded = true;
+    rorRunDetection();
+  } catch(e) {
+    console.warn('face-api load failed:', e);
+    // fallback — fixed center box
+    const W = window.innerWidth, H = window.innerHeight;
+    rorFaceBox = {x:W*0.27,y:H*0.04,w:W*0.46,h:H*0.62};
+  }
+}
+
+// Face detection loop — runs at ~12fps independently of render
+async function rorRunDetection() {
+  const vid = document.getElementById('cam');
+  if(!vid || !rorActive) { setTimeout(rorRunDetection,200); return; }
+
+  if(vid.readyState >= 2) {
+    try {
+      const det = await faceapi.detectSingleFace(
+        vid, new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:0.35})
+      );
+      if(det) {
+        const b  = det.box;
+        const vW = vid.videoWidth  || 640;
+        const vH = vid.videoHeight || 480;
+        const W  = window.innerWidth;
+        const H  = window.innerHeight;
+        // mirror X — video is CSS scaleX(-1)
+        const mx = W - (b.x + b.width)  * W / vW;
+        const my = b.y * H / vH;
+        const mw = b.width  * W / vW;
+        const mh = b.height * H / vH;
+        if(rorFaceBox) {
+          const s = 0.2;
+          rorFaceBox.x += (mx-rorFaceBox.x)*s;
+          rorFaceBox.y += (my-rorFaceBox.y)*s;
+          rorFaceBox.w += (mw-rorFaceBox.w)*s;
+          rorFaceBox.h += (mh-rorFaceBox.h)*s;
+        } else {
+          rorFaceBox = {x:mx,y:my,w:mw,h:mh};
+        }
+        rorLastFaceTime = Date.now();
+      } else if(Date.now()-rorLastFaceTime > 2500) {
+        rorFaceBox = null;
+      }
+    } catch(e) {}
+  }
+  if(rorActive) setTimeout(rorRunDetection, 90);
+}
+
+// Build SVG string with current turbulence params — renders left half only
+function rorBuildSVG(bfx, bfy, sd, halfW, halfH) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${halfW}" height="${halfH}">
+  <defs>
+    <filter id="f" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="linearRGB">
+      <feTurbulence type="turbulence" baseFrequency="${bfx} ${bfy}" numOctaves="5" seed="${sd}"/>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 1
+                0 0 0 0 1
+                0 0 0 0 1
+                0 0 22 -9 1"/>
+    </filter>
+  </defs>
+  <rect width="${halfW}" height="${halfH}" filter="url(#f)"/>
+</svg>`;
+}
+
+// Main render frame
+function rorFrame() {
+  if(!rorActive || !rorCtx) return;
+  rorAnimT += 0.0018;
+
+  const W = rorCanvas.width  = window.innerWidth;
+  const H = rorCanvas.height = window.innerHeight;
+  rorCtx.clearRect(0,0,W,H);
+
+  // Animate turbulence — slow organic morph
+  const bfx = (0.038 + 0.009*Math.sin(rorAnimT*1.1)).toFixed(4);
+  const bfy = (0.030 + 0.007*Math.sin(rorAnimT*0.72+1.2)).toFixed(4);
+  const sd  = 3 + Math.floor((Math.sin(rorAnimT*0.14)+1)*4);
+
+  // Face position
+  let cx, cy, rx, ry;
+  if(rorFaceBox) {
+    cx = rorFaceBox.x + rorFaceBox.w*0.5;
+    cy = rorFaceBox.y + rorFaceBox.h*0.44;
+    rx = rorFaceBox.w*0.54;
+    ry = rorFaceBox.h*0.62;
+  } else {
+    cx = W*0.5; cy = H*0.28; rx = W*0.16; ry = H*0.23;
+  }
+
+  // Render noise at low-res (128x128 half = 64x128 left side)
+  const HALF_W = 64, FULL_H = 128;
+  const svgStr = rorBuildSVG(bfx, bfy, sd, HALF_W, FULL_H);
+  const blob   = new Blob([svgStr], {type:'image/svg+xml'});
+  const url    = URL.createObjectURL(blob);
+  const img    = new Image();
+
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+
+    // Left half offscreen
+    if(!rorOffCanvas) { rorOffCanvas=document.createElement('canvas'); rorOffCtx=rorOffCanvas.getContext('2d'); }
+    rorOffCanvas.width=HALF_W; rorOffCanvas.height=FULL_H;
+    rorOffCtx.drawImage(img,0,0,HALF_W,FULL_H);
+
+    // Full symmetric canvas
+    if(!rorFullCanvas) { rorFullCanvas=document.createElement('canvas'); rorFullCtx=rorFullCanvas.getContext('2d'); }
+    rorFullCanvas.width=HALF_W*2; rorFullCanvas.height=FULL_H;
+    rorFullCtx.clearRect(0,0,HALF_W*2,FULL_H);
+    // Left half
+    rorFullCtx.drawImage(rorOffCanvas,0,0);
+    // Right half = left flipped
+    rorFullCtx.save();
+    rorFullCtx.translate(HALF_W*2,0);
+    rorFullCtx.scale(-1,1);
+    rorFullCtx.drawImage(rorOffCanvas,0,0);
+    rorFullCtx.restore();
+
+    // Draw to main canvas clipped to face ellipse
+    rorCtx.save();
+    rorCtx.beginPath();
+    rorCtx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+    rorCtx.clip();
+    rorCtx.drawImage(rorFullCanvas, cx-rx, cy-ry, rx*2, ry*2);
+
+    // Dark vignette ring — gives mask depth + edge definition
+    const vig = rorCtx.createRadialGradient(cx,cy,rx*0.65,cx,cy,rx*1.02);
+    vig.addColorStop(0,'rgba(0,0,0,0)');
+    vig.addColorStop(1,'rgba(0,0,0,0.6)');
+    rorCtx.fillStyle=vig;
+    rorCtx.beginPath();
+    rorCtx.ellipse(cx,cy,rx*1.02,ry*1.02,0,0,Math.PI*2);
+    rorCtx.fill();
+
+    rorCtx.restore();
+
+    // Staples on top
+    rorDrawStaples(cx,cy,rx,ry);
+  };
+  img.onerror = () => URL.revokeObjectURL(url);
+  img.src = url;
+
+  rorAnimId = requestAnimationFrame(rorFrame);
+}
+
+function rorDrawStaples(cx,cy,rx,ry) {
+  const mY  = cy + ry*0.52;
+  const mW  = rx*0.37;
+  const gap = ry*0.032;
+
+  rorCtx.save();
+
+  // Void between lips
+  rorCtx.fillStyle='rgba(3,1,0,0.92)';
+  rorCtx.beginPath();
+  rorCtx.moveTo(cx-mW,mY);
+  rorCtx.bezierCurveTo(cx-mW*0.3,mY-gap,cx+mW*0.3,mY-gap,cx+mW,mY);
+  rorCtx.bezierCurveTo(cx+mW*0.3,mY+gap,cx-mW*0.3,mY+gap,cx-mW,mY);
+  rorCtx.closePath(); rorCtx.fill();
+
+  // Lip seams
+  rorCtx.strokeStyle='rgba(6,3,1,0.9)'; rorCtx.lineWidth=2.5; rorCtx.lineCap='round';
+  rorCtx.beginPath(); rorCtx.moveTo(cx-mW,mY);
+  rorCtx.bezierCurveTo(cx-mW*0.3,mY-gap,cx+mW*0.3,mY-gap,cx+mW,mY); rorCtx.stroke();
+  rorCtx.beginPath(); rorCtx.moveTo(cx-mW,mY);
+  rorCtx.bezierCurveTo(cx-mW*0.3,mY+gap,cx+mW*0.3,mY+gap,cx+mW,mY); rorCtx.stroke();
+
+  const N=6;
+  for(let i=0;i<N;i++){
+    const sx=cx-mW*0.86+(i/(N-1))*mW*1.72, sw=rx*0.026;
+    const tY=mY-gap-ry*0.048, bY=mY+gap+ry*0.048;
+    const sg=rorCtx.createLinearGradient(sx-sw,0,sx+sw,0);
+    sg.addColorStop(0,'#4a4a4a'); sg.addColorStop(0.3,'#d8d5d0');
+    sg.addColorStop(0.5,'#f4f2ef'); sg.addColorStop(0.7,'#b8b5b0'); sg.addColorStop(1,'#4a4a4a');
+    rorCtx.strokeStyle=sg; rorCtx.lineWidth=rx*0.024; rorCtx.lineCap='round'; rorCtx.lineJoin='round';
+    rorCtx.beginPath(); rorCtx.moveTo(sx-sw,tY); rorCtx.lineTo(sx-sw,bY);
+    rorCtx.lineTo(sx+sw,bY); rorCtx.lineTo(sx+sw,tY); rorCtx.stroke();
+    rorCtx.beginPath(); rorCtx.moveTo(sx-sw,tY); rorCtx.lineTo(sx+sw,tY); rorCtx.stroke();
+    [[sx-sw,tY],[sx+sw,tY],[sx-sw,bY],[sx+sw,bY]].forEach(([px,py])=>{
+      const g=rorCtx.createRadialGradient(px,py,0,px,py,rx*0.019);
+      g.addColorStop(0,'rgba(170,18,7,0.9)'); g.addColorStop(1,'rgba(70,2,1,0)');
+      rorCtx.fillStyle=g; rorCtx.beginPath(); rorCtx.arc(px,py,rx*0.019,0,Math.PI*2); rorCtx.fill();
+    });
+    if(i%2===0){
+      const dl=ry*(0.055+0.018*Math.sin(rorAnimT*0.45+i*1.3));
+      const dg=rorCtx.createLinearGradient(sx,bY,sx,bY+dl);
+      dg.addColorStop(0,'rgba(155,12,5,0.85)'); dg.addColorStop(1,'rgba(60,2,1,0)');
+      rorCtx.strokeStyle=dg; rorCtx.lineWidth=rx*0.009;
+      rorCtx.beginPath(); rorCtx.moveTo(sx,bY); rorCtx.lineTo(sx,bY+dl); rorCtx.stroke();
+    }
+  }
+  rorCtx.restore();
+}
 
 function startRorschach() {
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'block';
-  rorschachActive = true;
-  drawRorschach();
+  const c = document.getElementById('rorschach-canvas');
+  if(c) c.style.display='block';
+  rorActive = true;
+  rorLoadFaceModel();
+  if(rorAnimId) cancelAnimationFrame(rorAnimId);
+  rorFrame();
 }
 
 function stopRorschach() {
-  rorschachActive = false;
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'none';
-  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+  rorActive = false;
+  if(rorAnimId) { cancelAnimationFrame(rorAnimId); rorAnimId=null; }
+  const c = document.getElementById('rorschach-canvas');
+  if(c) { c.style.display='none'; const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
 }
 
-function drawRorschach() {
-  if(!rorschachActive) return;
-  const canvas = document.getElementById('rorschach-canvas');
-  const W = canvas.width  = canvas.offsetWidth;
-  const H = canvas.height = canvas.offsetHeight;
-  const ctx = canvas.getContext('2d');
-  rorschachPhase += 0.006;
-  const t = rorschachPhase;
-
-  ctx.clearRect(0,0,W,H);
-
-  // ── FACE BOUNDS ───────────────────────────────────────────
-  const cx = W * 0.5;
-  const cy = H * 0.27;
-  const rx = W * 0.155;
-  const ry = H * 0.235;
-
-  // ── PERLIN-STYLE NOISE (sum of harmonics = smooth fluid) ──
-  function noise(x, y, t) {
-    // Multiple octaves of sin/cos = pseudo-perlin, very smooth
-    return (
-      Math.sin(x * 2.1 + t * 1.1) * Math.cos(y * 1.8 - t * 0.9) * 0.35 +
-      Math.sin(x * 3.7 - t * 1.4 + y * 2.2) * 0.25 +
-      Math.cos(x * 1.3 + y * 3.1 + t * 0.7) * 0.2  +
-      Math.sin(x * 5.2 + t * 2.1 - y * 1.5) * 0.12 +
-      Math.cos(x * 0.8 - y * 4.3 + t * 1.6) * 0.08
-    );
-  }
-
-  // ── RENDER FLUID INK — offscreen low-res then scale up ───
-  // Render at 80x120 then draw scaled — fast on mobile
-  const OFF_W = 80, OFF_H = 120;
-  const off = document.createElement('canvas');
-  off.width = OFF_W; off.height = OFF_H;
-  const octx = off.getContext('2d');
-  const imgData = octx.createImageData(OFF_W, OFF_H);
-  const d = imgData.data;
-
-  for(let row = 0; row < OFF_H; row++) {
-    for(let col = 0; col < OFF_W; col++) {
-      const fx = (col / OFF_W) - 0.5;
-      const fy = (row / OFF_H) - 0.5;
-
-      // skip outside ellipse
-      if((fx*fx*4) + (fy*fy*4) > 1) continue;
-
-      // mirror for symmetry
-      const sfx = Math.abs(fx) * 2.8;
-      const sfy = fy * 2.8;
-
-      const n = noise(sfx, sfy, t);
-      const isInk = n > 0.05;
-
-      // edge feather
-      const edgeDist = 1 - Math.sqrt(fx*fx*4 + fy*fy*4);
-      const alpha = Math.min(255, edgeDist * 4 * 255);
-
-      const idx = (row * OFF_W + col) * 4;
-      if(isInk) {
-        d[idx]=6; d[idx+1]=3; d[idx+2]=1; d[idx+3]=Math.floor(alpha*0.93);
-      } else {
-        d[idx]=218; d[idx+1]=208; d[idx+2]=188; d[idx+3]=Math.floor(alpha*0.9);
-      }
-    }
-  }
-  octx.putImageData(imgData, 0, 0);
-
-  // Draw scaled up onto main canvas, clipped to face ellipse
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.clip();
-  ctx.drawImage(off, cx - rx, cy - ry, rx*2, ry*2);
-  ctx.restore();
-
-  // ── MASK EDGE — dark oval border ─────────────────────────
-  ctx.save();
-  // Outer shadow ring
-  const edgeGrad = ctx.createRadialGradient(cx, cy, rx * 0.75, cx, cy, rx * 1.05);
-  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
-  edgeGrad.addColorStop(1, 'rgba(0,0,0,0.65)');
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx * 1.05, ry * 1.05, 0, 0, Math.PI*2);
-  ctx.fillStyle = edgeGrad;
-  ctx.fill();
-  ctx.restore();
-
-  // ── STAPLE MOUTH ─────────────────────────────────────────
-  const mouthCY = cy + ry * 0.54;
-  const mouthW  = rx * 0.36;
-  const lipGap  = ry * 0.036;
-
-  ctx.save();
-
-  // Clip staples to face area
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.clip();
-
-  // Lip seam
-  ctx.strokeStyle = 'rgba(10,5,3,0.85)';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(cx - mouthW, mouthCY);
-  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY - lipGap, cx + mouthW*0.3, mouthCY - lipGap, cx + mouthW, mouthCY);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx - mouthW, mouthCY);
-  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY + lipGap, cx + mouthW*0.3, mouthCY + lipGap, cx + mouthW, mouthCY);
-  ctx.stroke();
-
-  // Dark gap between lips
-  ctx.fillStyle = 'rgba(4,2,1,0.9)';
-  ctx.beginPath();
-  ctx.moveTo(cx - mouthW, mouthCY);
-  ctx.bezierCurveTo(cx - mouthW*0.3, mouthCY - lipGap, cx + mouthW*0.3, mouthCY - lipGap, cx + mouthW, mouthCY);
-  ctx.bezierCurveTo(cx + mouthW*0.3, mouthCY + lipGap, cx - mouthW*0.3, mouthCY + lipGap, cx - mouthW, mouthCY);
-  ctx.closePath();
-  ctx.fill();
-
-  // 6 metal staples
-  const numStaples = 6;
-  for(let i = 0; i < numStaples; i++) {
-    const sx  = cx - mouthW * 0.86 + (i / (numStaples-1)) * mouthW * 1.72;
-    const sw  = rx * 0.03;
-    const topY = mouthCY - lipGap - ry * 0.052;
-    const botY = mouthCY + lipGap + ry * 0.052;
-
-    // steel gradient
-    const sg = ctx.createLinearGradient(sx-sw, 0, sx+sw, 0);
-    sg.addColorStop(0,   '#606060');
-    sg.addColorStop(0.35,'#e0ddd8');
-    sg.addColorStop(0.5, '#f5f3f0');
-    sg.addColorStop(0.65,'#c0bdb8');
-    sg.addColorStop(1,   '#585858');
-
-    ctx.strokeStyle = sg;
-    ctx.lineWidth   = rx * 0.028;
-    ctx.lineCap     = 'round';
-    ctx.lineJoin    = 'round';
-
-    // U-shape staple
-    ctx.beginPath();
-    ctx.moveTo(sx - sw, topY);
-    ctx.lineTo(sx - sw, botY);
-    ctx.lineTo(sx + sw, botY);
-    ctx.lineTo(sx + sw, topY);
-    ctx.stroke();
-    // top bar
-    ctx.beginPath();
-    ctx.moveTo(sx - sw, topY);
-    ctx.lineTo(sx + sw, topY);
-    ctx.stroke();
-
-    // blood at pierce points
-    [[sx-sw,topY],[sx+sw,topY],[sx-sw,botY],[sx+sw,botY]].forEach(([px,py]) => {
-      const bg = ctx.createRadialGradient(px,py,0,px,py,rx*0.022);
-      bg.addColorStop(0,'rgba(160,18,8,0.8)');
-      bg.addColorStop(0.5,'rgba(100,8,4,0.4)');
-      bg.addColorStop(1,'rgba(70,3,1,0)');
-      ctx.fillStyle = bg;
-      ctx.beginPath(); ctx.arc(px,py,rx*0.022,0,Math.PI*2); ctx.fill();
-    });
-
-    // blood drip (alternating, slow pulse)
-    if(i % 2 === 0) {
-      const dLen = ry * (0.055 + 0.02*Math.sin(t*0.4 + i));
-      const dg = ctx.createLinearGradient(sx,botY,sx,botY+dLen);
-      dg.addColorStop(0,'rgba(150,12,6,0.75)');
-      dg.addColorStop(1,'rgba(80,4,2,0)');
-      ctx.strokeStyle = dg; ctx.lineWidth = rx*0.01;
-      ctx.beginPath(); ctx.moveTo(sx,botY); ctx.lineTo(sx,botY+dLen); ctx.stroke();
-    }
-  }
-
-  ctx.restore();
-
-  rorschachFrame = requestAnimationFrame(drawRorschach);
-}
-
-
-
-
-function wearItem(type, key) {
-  document.querySelectorAll('.closet-item').forEach(i=>i.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-
-  if(type === 'mask') {
-    stopRorschach();
-    if(key==='none') { 
-      document.getElementById('rorschach-canvas').style.display='none'; 
-    } else if(key==='rorschach') {
-      startRorschach();
-      }
-
-  document.getElementById('closet-panel').classList.remove('show');
-  showNotif('🎭 MASK UPDATED');
-}
 
 function toggleBgPicker() {
   document.getElementById('bg-picker').classList.toggle('show');
@@ -1159,7 +1187,6 @@ function setBg(key, el) {
   }
   document.getElementById('bg-picker').classList.remove('show');
   showNotif('🖼 BACKGROUND SET');
-}
 }
 
 buildChooser();
