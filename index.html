@@ -819,8 +819,7 @@ function rorFrame() {
 
     rorCtx.restore();
 
-    // Staples on top
-    rorDrawStaples(cx,cy,rx,ry);
+    // Staples removed per Tyler
   };
   img.onerror = () => URL.revokeObjectURL(url);
   img.src = url;
@@ -828,54 +827,7 @@ function rorFrame() {
   rorAnimId = requestAnimationFrame(rorFrame);
 }
 
-function rorDrawStaples(cx,cy,rx,ry) {
-  const mY  = cy + ry*0.52;
-  const mW  = rx*0.37;
-  const gap = ry*0.032;
-
-  rorCtx.save();
-
-  // Void between lips
-  rorCtx.fillStyle='rgba(3,1,0,0.92)';
-  rorCtx.beginPath();
-  rorCtx.moveTo(cx-mW,mY);
-  rorCtx.bezierCurveTo(cx-mW*0.3,mY-gap,cx+mW*0.3,mY-gap,cx+mW,mY);
-  rorCtx.bezierCurveTo(cx+mW*0.3,mY+gap,cx-mW*0.3,mY+gap,cx-mW,mY);
-  rorCtx.closePath(); rorCtx.fill();
-
-  // Lip seams
-  rorCtx.strokeStyle='rgba(6,3,1,0.9)'; rorCtx.lineWidth=2.5; rorCtx.lineCap='round';
-  rorCtx.beginPath(); rorCtx.moveTo(cx-mW,mY);
-  rorCtx.bezierCurveTo(cx-mW*0.3,mY-gap,cx+mW*0.3,mY-gap,cx+mW,mY); rorCtx.stroke();
-  rorCtx.beginPath(); rorCtx.moveTo(cx-mW,mY);
-  rorCtx.bezierCurveTo(cx-mW*0.3,mY+gap,cx+mW*0.3,mY+gap,cx+mW,mY); rorCtx.stroke();
-
-  const N=6;
-  for(let i=0;i<N;i++){
-    const sx=cx-mW*0.86+(i/(N-1))*mW*1.72, sw=rx*0.026;
-    const tY=mY-gap-ry*0.048, bY=mY+gap+ry*0.048;
-    const sg=rorCtx.createLinearGradient(sx-sw,0,sx+sw,0);
-    sg.addColorStop(0,'#4a4a4a'); sg.addColorStop(0.3,'#d8d5d0');
-    sg.addColorStop(0.5,'#f4f2ef'); sg.addColorStop(0.7,'#b8b5b0'); sg.addColorStop(1,'#4a4a4a');
-    rorCtx.strokeStyle=sg; rorCtx.lineWidth=rx*0.024; rorCtx.lineCap='round'; rorCtx.lineJoin='round';
-    rorCtx.beginPath(); rorCtx.moveTo(sx-sw,tY); rorCtx.lineTo(sx-sw,bY);
-    rorCtx.lineTo(sx+sw,bY); rorCtx.lineTo(sx+sw,tY); rorCtx.stroke();
-    rorCtx.beginPath(); rorCtx.moveTo(sx-sw,tY); rorCtx.lineTo(sx+sw,tY); rorCtx.stroke();
-    [[sx-sw,tY],[sx+sw,tY],[sx-sw,bY],[sx+sw,bY]].forEach(([px,py])=>{
-      const g=rorCtx.createRadialGradient(px,py,0,px,py,rx*0.019);
-      g.addColorStop(0,'rgba(170,18,7,0.9)'); g.addColorStop(1,'rgba(70,2,1,0)');
-      rorCtx.fillStyle=g; rorCtx.beginPath(); rorCtx.arc(px,py,rx*0.019,0,Math.PI*2); rorCtx.fill();
-    });
-    if(i%2===0){
-      const dl=ry*(0.055+0.018*Math.sin(rorAnimT*0.45+i*1.3));
-      const dg=rorCtx.createLinearGradient(sx,bY,sx,bY+dl);
-      dg.addColorStop(0,'rgba(155,12,5,0.85)'); dg.addColorStop(1,'rgba(60,2,1,0)');
-      rorCtx.strokeStyle=dg; rorCtx.lineWidth=rx*0.009;
-      rorCtx.beginPath(); rorCtx.moveTo(sx,bY); rorCtx.lineTo(sx,bY+dl); rorCtx.stroke();
-    }
-  }
-  rorCtx.restore();
-}
+function rorDrawStaples(cx,cy,rx,ry) { /* removed */ }
 
 function startRorschach() {
   const c = document.getElementById('rorschach-canvas');
