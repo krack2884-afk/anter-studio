@@ -382,6 +382,55 @@ That's a weight worth carrying.
 
 But only if you carry it right.`,
     twinFlame:`To my wife — I'm not the man I was. And I'm not yet the man I'm becoming. But I am here. Present. Committed. And I believe in what we are underneath all of this. I love you.`
+  },
+  {
+    id:"S008",
+    title:"THEY CAN'T STOP WHAT'S ALREADY MOVING",
+    type:"Daily Script — June 11, 2026",
+    tags:"#empath #narcissisticabuse #empathwarrior #stayunmapped #calmispower #covenantlove #darkMotivation #healingjourney #empathsoftiktok #toxicrelationship #spiritualwarrior #chosenone",
+    channels:"Comment your link on: Dark Motivation videos · The Chosen Grim videos · r/EmpathSupport · r/NarcissisticAbuse · Empath Facebook groups · TikTok #darkMotivation tag · YouTube search 'empath narcissist' comments",
+    body:`Let me tell you what happened when they all got together to stop me.
+
+They coordinated. They called backup. They made a plan — a whole system designed to keep me spinning, keep me reacting, keep me proving myself.
+
+And I just... didn't.
+
+Not because I didn't feel it. I felt every bit of it. The accusations. The noise. The exhaustion of being the only calm person in a room full of chaos.
+
+But here's what I learned about people who are wired the way I am —
+
+We don't break under pressure. We clarify.
+
+All that chaos did was show me exactly who I am. Exactly what I'm made of. Exactly what I'm NOT going to become.
+
+Because here's the thing nobody tells you about teams that form against one person:
+
+You only need a team when the one you're up against is too much for any single person to handle alone.
+
+Think about that.
+
+They needed numbers. I just needed God.
+
+And while they were coordinating their next move — I was getting still. Getting quiet. Getting rooted in something they can't touch, can't map, can't counter.
+
+I didn't react. I didn't defend. I didn't prove anything to anybody.
+
+I just stood there. Whole.
+
+And that was enough.
+
+That's always been enough.
+
+If you're in a season where it feels like everyone has united against you — I need you to hear this:
+
+That's not a sign you're losing.
+
+That's a sign you're the one they can't figure out.
+
+Stay soft. Stay building. Let them exhaust themselves trying to move something God already planted.
+
+You can't stop what's already moving.`,
+    twinFlame:null
   }
 ];
 
@@ -421,7 +470,7 @@ function buildScriptsPanel() {
   scripts.forEach(s => {
     const c = document.createElement('div');
     c.className = 'script-card';
-    c.innerHTML = `<h3>${s.id} — ${s.title}</h3><div class="stag">${s.type}</div><button class="load-btn" onclick="loadScriptFromPanel('${s.id}')">LOAD IN STUDIO →</button>`;
+    c.innerHTML = `<h3>${s.id} — ${s.title}</h3><div class="stag">${s.type}</div>${s.tags ? '<div class="stag" style="color:#666;margin-top:4px;font-size:0.65rem;">'+s.tags+'</div>' : ''}${s.channels ? '<div class="stag" style="color:#445;margin-top:4px;font-size:0.65rem;">📡 '+s.channels+'</div>' : ''}<button class="load-btn" onclick="loadScriptFromPanel('${s.id}')">LOAD IN STUDIO →</button>`;
     p.appendChild(c);
   });
 }
