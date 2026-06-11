@@ -18,7 +18,7 @@
   .panel.active { display:flex; flex-direction:column; }
 
   #studio { position:relative; background:#000; }
-  #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.6; }
+  #cam { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.9; z-index:2; }
   #no-cam { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; color:#333; font-size:0.8rem; letter-spacing:0.1em; }
 
   #chooser { position:absolute; inset:0; z-index:10; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px; overflow-y:auto; }
@@ -63,14 +63,35 @@
   .save-btn { margin-top:10px; background:var(--gold); color:#000; border:none; padding:10px 24px; border-radius:4px; cursor:pointer; font-weight:700; letter-spacing:0.1em; }
 
 
+
+  /* Virtual Closet */
+  #closet-btn { }
+  #closet-panel { position:absolute; bottom:60px; left:12px; z-index:25; display:none; flex-direction:column; gap:0; background:rgba(0,0,0,0.95); border:1px solid #333; border-radius:10px; width:220px; max-height:320px; overflow-y:auto; }
+  #closet-panel.show { display:flex; }
+  .closet-section { padding:6px 10px; font-size:0.6rem; letter-spacing:0.12em; color:var(--gold); border-bottom:1px solid #1a1a1a; }
+  .closet-item { display:flex; align-items:center; gap:8px; padding:7px 10px; cursor:pointer; border-bottom:1px solid #111; transition:background 0.15s; }
+  .closet-item:hover, .closet-item.active { background:rgba(212,175,55,0.1); }
+  .closet-item .ci-icon { font-size:1.3rem; width:28px; text-align:center; }
+  .closet-item .ci-name { font-size:0.7rem; color:#ccc; }
+  .closet-item.active .ci-name { color:var(--gold); }
+
+  /* Rorschach overlay */
+  #rorschach-canvas { position:absolute; inset:0; width:100%; height:100%; z-index:4; pointer-events:none; display:none; }
+  
+  /* Virtual outfit overlay */
+  #outfit-overlay { position:absolute; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:400px; height:100%; z-index:3; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
+  #hat-layer { position:absolute; top:-2%; width:70%; display:none; }
+  #shirt-layer { position:absolute; bottom:0; width:100%; display:none; }
+  #mask-layer { position:absolute; top:8%; width:55%; display:none; }
+
   /* Background selector */
   #bg-picker { position:absolute; bottom:60px; right:12px; z-index:20; display:none; flex-direction:column; gap:6px; background:rgba(0,0,0,0.92); border:1px solid #222; border-radius:8px; padding:10px; max-height:280px; overflow-y:auto; }
   #bg-picker.show { display:flex; }
   .bg-opt { width:160px; height:70px; border-radius:6px; cursor:pointer; border:2px solid transparent; background-size:cover; background-position:center; position:relative; overflow:hidden; flex-shrink:0; }
   .bg-opt:hover, .bg-opt.active { border-color:var(--gold); }
   .bg-opt span { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; letter-spacing:0.08em; padding:3px 6px; }
-  #bg-overlay { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.55; z-index:1; pointer-events:none; transition:opacity 0.4s; }
-  #bg-video-el { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1; pointer-events:none; display:none; }
+  #bg-overlay { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.9; z-index:1; pointer-events:none; transition:opacity 0.4s; }
+  #bg-video-el { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.8; z-index:1; pointer-events:none; display:none; }
   #notif { position:fixed; top:60px; right:16px; background:var(--gold); color:#000; padding:10px 18px; border-radius:6px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; opacity:0; transition:opacity 0.3s; z-index:999; pointer-events:none; }
   #notif.show { opacity:1; }
 </style>
@@ -88,6 +109,8 @@
 
 <div id="studio" class="panel active">
   <div id="bg-overlay"></div>
+  <canvas id="rorschach-canvas"></canvas>
+  <div id="outfit-overlay"><img id="hat-layer" src=""/><img id="mask-layer" src=""/><img id="shirt-layer" src=""/></div>
   <video id="bg-video-el" autoplay muted loop playsinline></video>
   <video id="cam" autoplay muted playsinline></video>
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
@@ -95,6 +118,31 @@
     <h2>SELECT YOUR SCRIPT</h2>
     <p>TAP TO LOAD · HIT PLAY · FILM YOUR TRUTH</p>
     <div id="chooser-list"></div>
+  </div>
+  <div id="closet-panel">
+    <div class="closet-section">— MASKS —</div>
+    <div class="closet-item" onclick="wearItem('mask','rorschach')"><span class="ci-icon">🎭</span><span class="ci-name">Rorschach (Watchmen)</span></div>
+    <div class="closet-item" onclick="wearItem('mask','sewn')"><span class="ci-icon">🪡</span><span class="ci-name">Sewn Lips (Signature)</span></div>
+    <div class="closet-item" onclick="wearItem('mask','lincoln')"><span class="ci-icon">🎩</span><span class="ci-name">Lincoln</span></div>
+    <div class="closet-item" onclick="wearItem('mask','washington')"><span class="ci-icon">🦅</span><span class="ci-name">Washington</span></div>
+    <div class="closet-item" onclick="wearItem('mask','obama')"><span class="ci-icon">⭐</span><span class="ci-name">Obama</span></div>
+    <div class="closet-item" onclick="wearItem('mask','mlk')"><span class="ci-icon">✊</span><span class="ci-name">MLK Jr.</span></div>
+    <div class="closet-item" onclick="wearItem('mask','malcolm')"><span class="ci-icon">🔥</span><span class="ci-name">Malcolm X</span></div>
+    <div class="closet-item" onclick="wearItem('mask','joker')"><span class="ci-icon">🃏</span><span class="ci-name">Joker (Dark)</span></div>
+    <div class="closet-item" onclick="wearItem('mask','skull')"><span class="ci-icon">💀</span><span class="ci-name">Skull / Death</span></div>
+    <div class="closet-item" onclick="wearItem('mask','v')"><span class="ci-icon">🗡️</span><span class="ci-name">V for Vendetta</span></div>
+    <div class="closet-item" onclick="wearItem('mask','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Mask</span></div>
+    <div class="closet-section">— HATS —</div>
+    <div class="closet-item" onclick="wearItem('hat','tophat')"><span class="ci-icon">🎩</span><span class="ci-name">Top Hat (Dark)</span></div>
+    <div class="closet-item" onclick="wearItem('hat','hood')"><span class="ci-icon">🕵️</span><span class="ci-name">Dark Hood</span></div>
+    <div class="closet-item" onclick="wearItem('hat','crown')"><span class="ci-icon">👑</span><span class="ci-name">Crown</span></div>
+    <div class="closet-item" onclick="wearItem('hat','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Hat</span></div>
+    <div class="closet-section">— SHIRTS —</div>
+    <div class="closet-item" onclick="wearItem('shirt','suit-black')"><span class="ci-icon">🕴️</span><span class="ci-name">Black Suit</span></div>
+    <div class="closet-item" onclick="wearItem('shirt','suit-dark')"><span class="ci-icon">🤵</span><span class="ci-name">Dark Charcoal Suit</span></div>
+    <div class="closet-item" onclick="wearItem('shirt','buttonup-black')"><span class="ci-icon">👔</span><span class="ci-name">Black Button-Up</span></div>
+    <div class="closet-item" onclick="wearItem('shirt','buttonup-red')"><span class="ci-icon">🔴</span><span class="ci-name">Deep Red Button-Up</span></div>
+    <div class="closet-item" onclick="wearItem('shirt','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Shirt</span></div>
   </div>
   <div id="bg-picker">
     <div class="bg-opt active" style="background:#000;" onclick="setBg('none',this)"><span>🖤 NONE</span></div>
@@ -123,6 +171,7 @@
       <button class="ctrl" onclick="changeSpeed(0.2)">+</button>
       <button class="ctrl" id="play-btn" onclick="togglePlay()">▶ PLAY</button>
       <div class="spacer"></div>
+      <button class="ctrl" onclick="toggleCloset()" title="Virtual Closet">👔 CLOSET</button>
       <button class="ctrl" onclick="toggleBgPicker()" title="Change background">🖼 BG</button>
       <button class="ctrl red" id="rec-btn" onclick="toggleRec()">⏺ REC</button>
     </div>
@@ -612,6 +661,376 @@ function rewindScript() {
   const max = zone.scrollHeight - zone.clientHeight;
   if(max > 0) document.getElementById('prog').style.width = Math.min(100,(zone.scrollTop/max)*100)+'%';
   showNotif('⏮ REWOUND');
+}
+
+
+function toggleCloset() {
+  document.getElementById('closet-panel').classList.toggle('show');
+  document.getElementById('bg-picker').classList.remove('show');
+}
+
+// ---- Rorschach morphing ink blot engine ----
+let rorschachActive = false;
+let rorschachFrame = null;
+let rorschachPhase = 0;
+
+function startRorschach() {
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'block';
+  rorschachActive = true;
+  drawRorschach();
+}
+
+function stopRorschach() {
+  rorschachActive = false;
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'none';
+  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+}
+
+function drawRorschach() {
+  if(!rorschachActive) return;
+  const canvas = document.getElementById('rorschach-canvas');
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  rorschachPhase += 0.018;
+  const t = rorschachPhase;
+
+  // White mask base — oval covering face area
+  const cx = W * 0.5, cy = H * 0.28;
+  const rx = W * 0.18, ry = H * 0.26;
+
+  ctx.clearRect(0,0,W,H);
+  
+  // Draw white oval mask
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#f0ede8';
+  ctx.fill();
+  ctx.restore();
+
+  // Clip to mask shape for ink blots
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  ctx.clip();
+
+  // Draw morphing ink blots (symmetric — mirrored left/right like real Rorschach)
+  ctx.fillStyle = 'rgba(10,8,5,0.88)';
+  
+  const blots = [
+    // center blot
+    { bx: 0, by: -0.05, size: 0.045 + 0.02*Math.sin(t*1.3) },
+    // upper pair
+    { bx: 0.055 + 0.02*Math.sin(t*0.9), by: -0.12 + 0.015*Math.cos(t*1.1), size: 0.035 + 0.015*Math.sin(t*1.7) },
+    // mid pair
+    { bx: 0.07 + 0.025*Math.sin(t*1.2), by: 0.04 + 0.02*Math.sin(t*0.7), size: 0.05 + 0.02*Math.cos(t*1.4) },
+    // lower pair
+    { bx: 0.04 + 0.015*Math.cos(t*1.6), by: 0.14 + 0.02*Math.sin(t*0.8), size: 0.04 + 0.015*Math.sin(t*2.1) },
+    // outer pair
+    { bx: 0.1 + 0.02*Math.sin(t*0.6), by: -0.04 + 0.025*Math.cos(t*1.3), size: 0.03 + 0.01*Math.sin(t*1.9) },
+  ];
+
+  blots.forEach(b => {
+    const sz = b.size * rx;
+    // right side
+    const bx = cx + b.bx * rx;
+    const by = cy + b.by * ry;
+    ctx.beginPath();
+    ctx.arc(bx, by, sz, 0, Math.PI*2);
+    // add organic wobble via bezier
+    ctx.fill();
+    // mirror left side
+    if(b.bx !== 0) {
+      ctx.beginPath();
+      ctx.arc(cx - b.bx * rx, by, sz, 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+
+  // sewn lips — stitched line across mouth
+  const mouthY = cy + ry * 0.45;
+  ctx.strokeStyle = '#1a1008';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx - rx*0.25, mouthY);
+  ctx.lineTo(cx + rx*0.25, mouthY);
+  ctx.stroke();
+  // stitches
+  for(let i = -3; i <= 3; i++) {
+    const sx = cx + (i * rx * 0.09);
+    ctx.beginPath();
+    ctx.moveTo(sx, mouthY - rx*0.04);
+    ctx.lineTo(sx, mouthY + rx*0.04);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+  rorschachFrame = requestAnimationFrame(drawRorschach);
+}
+
+// Draw canvas-based mask for presidents/icons
+function drawTextMask(label, color1, color2, stitched) {
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'block';
+  rorschachActive = false;
+  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+  
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W*0.5, cy = H*0.28, rx = W*0.18, ry = H*0.26;
+
+  // Mask base
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  const grad = ctx.createLinearGradient(cx-rx, cy-ry, cx+rx, cy+ry);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(1, color2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
+
+  // Label
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = `bold ${rx*0.28}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, cx, cy - ry*0.1);
+
+  if(stitched) {
+    const mouthY = cy + ry * 0.45;
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - rx*0.25, mouthY);
+    ctx.lineTo(cx + rx*0.25, mouthY);
+    ctx.stroke();
+    for(let i=-3;i<=3;i++){
+      const sx = cx + (i*rx*0.09);
+      ctx.beginPath(); ctx.moveTo(sx,mouthY-rx*0.04); ctx.lineTo(sx,mouthY+rx*0.04); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawJokerMask() {
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'block';
+  rorschachActive = false;
+  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle='#f5e6c8'; ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.clip();
+  // green hair suggestion top
+  ctx.fillStyle='#1a4a1a';
+  ctx.fillRect(cx-rx,cy-ry,rx*2,ry*0.3);
+  // red mouth slash
+  ctx.strokeStyle='#8b0000'; ctx.lineWidth=rx*0.08;
+  ctx.beginPath();
+  ctx.moveTo(cx-rx*0.35,cy+ry*0.2);
+  ctx.quadraticCurveTo(cx,cy+ry*0.5,cx+rx*0.35,cy+ry*0.2);
+  ctx.stroke();
+  // sewn stitches on smile
+  ctx.strokeStyle='#111'; ctx.lineWidth=1.5;
+  for(let i=0;i<6;i++){
+    const ang = Math.PI*0.15 + i*(Math.PI*0.7/5);
+    const mx = cx + rx*0.35*Math.cos(ang-Math.PI*0.5)*2.2;
+    const my = cy + ry*0.35 + ry*0.15*Math.sin(ang);
+    ctx.beginPath(); ctx.moveTo(mx,my-4); ctx.lineTo(mx,my+4); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawVMask() {
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'block';
+  rorschachActive = false;
+  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle='#f5f0e8'; ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.clip();
+  // Guy Fawkes mustache & smile
+  ctx.fillStyle='#1a0a00';
+  ctx.font=`${rx*0.25}px serif`;
+  ctx.textAlign='center';
+  ctx.fillText('∿∿∿', cx, cy+ry*0.15);
+  ctx.font=`${rx*0.15}px serif`;
+  ctx.fillText('——', cx, cy+ry*0.35);
+  // rosy cheeks
+  ctx.fillStyle='rgba(180,30,30,0.3)';
+  ctx.beginPath(); ctx.arc(cx-rx*0.45,cy+ry*0.1,rx*0.15,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+rx*0.45,cy+ry*0.1,rx*0.15,0,Math.PI*2); ctx.fill();
+  // sewn mouth
+  const mouthY=cy+ry*0.45;
+  ctx.strokeStyle='#111'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-rx*0.25,mouthY); ctx.lineTo(cx+rx*0.25,mouthY); ctx.stroke();
+  for(let i=-3;i<=3;i++){const sx=cx+(i*rx*0.09);ctx.beginPath();ctx.moveTo(sx,mouthY-4);ctx.lineTo(sx,mouthY+4);ctx.stroke();}
+  ctx.restore();
+}
+
+function drawSkullMask() {
+  const canvas = document.getElementById('rorschach-canvas');
+  canvas.style.display = 'block';
+  rorschachActive = false;
+  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.fillStyle='#e8e8e8'; ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+  ctx.clip();
+  // eye sockets
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.ellipse(cx-rx*0.3,cy-ry*0.05,rx*0.2,ry*0.18,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+rx*0.3,cy-ry*0.05,rx*0.2,ry*0.18,0,0,Math.PI*2); ctx.fill();
+  // nose cavity
+  ctx.beginPath(); 
+  ctx.moveTo(cx,cy+ry*0.2); ctx.lineTo(cx-rx*0.08,cy+ry*0.35); ctx.lineTo(cx+rx*0.08,cy+ry*0.35); 
+  ctx.fill();
+  // teeth
+  ctx.fillStyle='#111';
+  const toothY=cy+ry*0.5;
+  for(let i=-3;i<=3;i++){
+    ctx.fillRect(cx+i*rx*0.1-rx*0.04,toothY,rx*0.07,ry*0.08);
+  }
+  // sewn mouth
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-rx*0.35,toothY); ctx.lineTo(cx+rx*0.35,toothY); ctx.stroke();
+  ctx.restore();
+}
+
+const outfitColors = {
+  'suit-black': ['#050505','#111','Black Suit'],
+  'suit-dark': ['#1a1a2a','#0d0d1a','Charcoal Suit'],
+  'buttonup-black': ['#080808','#111','Black Button-Up'],
+  'buttonup-red': ['#3a0505','#1a0202','Red Button-Up'],
+};
+
+function wearItem(type, key) {
+  document.querySelectorAll('.closet-item').forEach(i=>i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  if(type === 'mask') {
+    stopRorschach();
+    if(key==='none') { 
+      document.getElementById('rorschach-canvas').style.display='none'; 
+    } else if(key==='rorschach') {
+      startRorschach();
+    } else if(key==='joker') {
+      drawJokerMask();
+    } else if(key==='v') {
+      drawVMask();
+    } else if(key==='skull') {
+      drawSkullMask();
+    } else if(key==='sewn') {
+      drawTextMask('', '#e8e4dc','#d0ccc4', true);
+    } else if(key==='lincoln') {
+      drawTextMask('LINCOLN', '#1a1008','#0d0804', true);
+    } else if(key==='washington') {
+      drawTextMask('WASHINGTON', '#0d1a08','#081008', true);
+    } else if(key==='obama') {
+      drawTextMask('OBAMA', '#0d0d1a','#08080f', true);
+    } else if(key==='mlk') {
+      drawTextMask('MLK', '#1a0808','#0f0404', true);
+    } else if(key==='malcolm') {
+      drawTextMask('MALCOLM X', '#1a1000','#0d0800', true);
+    }
+  }
+  
+  if(type === 'shirt') {
+    const sl = document.getElementById('shirt-layer');
+    if(key==='none') { sl.style.display='none'; return; }
+    const cfg = outfitColors[key];
+    if(cfg) {
+      // Draw shirt on a temp canvas and set as data URL
+      const tc = document.createElement('canvas'); tc.width=400; tc.height=300;
+      const tx = tc.getContext('2d');
+      const sg = tx.createLinearGradient(0,0,400,300);
+      sg.addColorStop(0,cfg[0]); sg.addColorStop(1,cfg[1]);
+      tx.fillStyle=sg;
+      // shirt shape
+      tx.beginPath();
+      tx.moveTo(80,0); tx.lineTo(0,60); tx.lineTo(0,300); tx.lineTo(400,300); tx.lineTo(400,60); tx.lineTo(320,0);
+      tx.lineTo(220,30); tx.lineTo(200,80); tx.lineTo(180,30); tx.closePath();
+      tx.fill();
+      // collar
+      tx.fillStyle='rgba(255,255,255,0.08)';
+      tx.beginPath(); tx.moveTo(160,0); tx.lineTo(200,60); tx.lineTo(240,0); tx.closePath(); tx.fill();
+      sl.src=tc.toDataURL(); sl.style.display='block';
+    }
+  }
+
+  if(type === 'hat') {
+    const hl = document.getElementById('hat-layer');
+    if(key==='none') { hl.style.display='none'; return; }
+    const tc = document.createElement('canvas'); tc.width=300; tc.height=180;
+    const tx = tc.getContext('2d');
+    if(key==='tophat') {
+      tx.fillStyle='#0a0a0a';
+      tx.fillRect(80,40,140,120); // brim
+      tx.fillRect(60,140,180,18);
+      tx.fillStyle='#1a1008';
+      tx.fillRect(90,38,120,6); // band
+    } else if(key==='hood') {
+      tx.fillStyle='#0d0d1a';
+      tx.beginPath(); tx.arc(150,80,100,Math.PI,0); tx.lineTo(270,180); tx.lineTo(30,180); tx.closePath(); tx.fill();
+      tx.fillStyle='#050508';
+      tx.beginPath(); tx.ellipse(150,170,80,30,0,0,Math.PI*2); tx.fill();
+    } else if(key==='crown') {
+      tx.fillStyle='#b8960c';
+      tx.beginPath();
+      tx.moveTo(40,160); tx.lineTo(40,60); tx.lineTo(90,100); tx.lineTo(150,40); tx.lineTo(210,100); tx.lineTo(260,60); tx.lineTo(260,160); tx.closePath();
+      tx.fill();
+      // gems
+      ['#c0392b','#2980b9','#27ae60'].forEach((c,i)=>{
+        tx.fillStyle=c; tx.beginPath(); tx.arc(80+i*80,80,10,0,Math.PI*2); tx.fill();
+      });
+    }
+    hl.src=tc.toDataURL(); hl.style.display='block';
+  }
+
+  document.getElementById('closet-panel').classList.remove('show');
+  showNotif('👔 OUTFIT UPDATED');
 }
 
 function toggleBgPicker() {
