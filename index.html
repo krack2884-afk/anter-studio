@@ -62,6 +62,15 @@
   #api-key-input { width:100%; background:#111; border:1px solid #2a2a2a; color:#fff; padding:12px; border-radius:6px; font-family:monospace; font-size:0.85rem; }
   .save-btn { margin-top:10px; background:var(--gold); color:#000; border:none; padding:10px 24px; border-radius:4px; cursor:pointer; font-weight:700; letter-spacing:0.1em; }
 
+
+  /* Background selector */
+  #bg-picker { position:absolute; bottom:60px; right:12px; z-index:20; display:none; flex-direction:column; gap:6px; background:rgba(0,0,0,0.92); border:1px solid #222; border-radius:8px; padding:10px; max-height:280px; overflow-y:auto; }
+  #bg-picker.show { display:flex; }
+  .bg-opt { width:160px; height:70px; border-radius:6px; cursor:pointer; border:2px solid transparent; background-size:cover; background-position:center; position:relative; overflow:hidden; flex-shrink:0; }
+  .bg-opt:hover, .bg-opt.active { border-color:var(--gold); }
+  .bg-opt span { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:#fff; font-size:0.6rem; letter-spacing:0.08em; padding:3px 6px; }
+  #bg-overlay { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.55; z-index:1; pointer-events:none; transition:opacity 0.4s; }
+  #bg-video-el { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1; pointer-events:none; display:none; }
   #notif { position:fixed; top:60px; right:16px; background:var(--gold); color:#000; padding:10px 18px; border-radius:6px; font-size:0.8rem; font-weight:700; letter-spacing:0.1em; opacity:0; transition:opacity 0.3s; z-index:999; pointer-events:none; }
   #notif.show { opacity:1; }
 </style>
@@ -78,12 +87,24 @@
 </div>
 
 <div id="studio" class="panel active">
+  <div id="bg-overlay"></div>
+  <video id="bg-video-el" autoplay muted loop playsinline></video>
   <video id="cam" autoplay muted playsinline></video>
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
   <div id="chooser">
     <h2>SELECT YOUR SCRIPT</h2>
     <p>TAP TO LOAD · HIT PLAY · FILM YOUR TRUTH</p>
     <div id="chooser-list"></div>
+  </div>
+  <div id="bg-picker">
+    <div class="bg-opt active" style="background:#000;" onclick="setBg('none',this)"><span>🖤 NONE</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#1a0a00,#3d1a00,#0d0d0d);" onclick="setBg('fire-cave',this)"><span>🔥 FIRE CAVE</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#0a0010,#1a0030,#050008);" onclick="setBg('prison',this)"><span>⛓️ PRISON / DUNGEON</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#0d1a0d,#0a2010,#050f05);" onclick="setBg('monastery',this)"><span>🕯️ MONASTERY</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#0a0a1a,#10102a,#050510);" onclick="setBg('cave-art',this)"><span>🗿 CAVE / PETROGLYPHS</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#1a1000,#2a1800,#100a00);" onclick="setBg('cathedral',this)"><span>⛪ DARK CATHEDRAL</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#001a1a,#002020,#000d0d);" onclick="setBg('abyss',this)"><span>🌊 THE ABYSS</span></div>
+    <div class="bg-opt" style="background:linear-gradient(135deg,#0f0f0f,#1a1a1a,#050505);" onclick="setBg('void',this)"><span>🌑 THE VOID</span></div>
   </div>
   <div id="prompter">
     <div id="prog"></div>
@@ -95,11 +116,14 @@
     </div>
     <div id="ctrl-bar">
       <button class="ctrl" onclick="exitPrompter()">← BACK</button>
+      <button class="ctrl" onclick="restartScript()" title="Restart from top">↩ START</button>
+      <button class="ctrl" onclick="rewindScript()" title="Rewind 5 seconds">⏮ REW</button>
       <button class="ctrl" onclick="changeSpeed(-0.2)">−</button>
       <div id="speed-display">1.0×</div>
       <button class="ctrl" onclick="changeSpeed(0.2)">+</button>
       <button class="ctrl" id="play-btn" onclick="togglePlay()">▶ PLAY</button>
       <div class="spacer"></div>
+      <button class="ctrl" onclick="toggleBgPicker()" title="Change background">🖼 BG</button>
       <button class="ctrl red" id="rec-btn" onclick="toggleRec()">⏺ REC</button>
     </div>
   </div>
@@ -570,6 +594,77 @@ function showNotif(msg) {
   const n = document.getElementById('notif');
   n.textContent=msg; n.classList.add('show');
   setTimeout(()=>n.classList.remove('show'),3000);
+}
+
+function restartScript() {
+  stopScroll(); isPlaying = false;
+  document.getElementById('scroll-zone').scrollTop = 0;
+  document.getElementById('prog').style.width = '0%';
+  const btn = document.getElementById('play-btn');
+  btn.textContent='▶ PLAY'; btn.classList.remove('playing');
+  showNotif('↩ BACK TO TOP');
+}
+
+function rewindScript() {
+  const zone = document.getElementById('scroll-zone');
+  const rewindPx = 300;
+  zone.scrollTop = Math.max(0, zone.scrollTop - rewindPx);
+  const max = zone.scrollHeight - zone.clientHeight;
+  if(max > 0) document.getElementById('prog').style.width = Math.min(100,(zone.scrollTop/max)*100)+'%';
+  showNotif('⏮ REWOUND');
+}
+
+function toggleBgPicker() {
+  document.getElementById('bg-picker').classList.toggle('show');
+}
+
+const bgConfigs = {
+  'none': { gradient: null, particles: false },
+  'fire-cave': { 
+    gradient: 'radial-gradient(ellipse at bottom, #3d1a00 0%, #1a0800 40%, #0a0500 100%)',
+    overlay: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,100,0,0.03) 2px, rgba(255,100,0,0.03) 4px)'
+  },
+  'prison': { 
+    gradient: 'linear-gradient(180deg, #050008 0%, #0d0015 50%, #020005 100%)',
+    overlay: 'repeating-linear-gradient(90deg, rgba(100,0,200,0.04) 0px, rgba(100,0,200,0.04) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(0deg, rgba(100,0,200,0.04) 0px, rgba(100,0,200,0.04) 1px, transparent 1px, transparent 60px)'
+  },
+  'monastery': { 
+    gradient: 'radial-gradient(ellipse at top, #1a1200 0%, #0d0900 60%, #050400 100%)',
+    overlay: 'radial-gradient(circle at 50% 0%, rgba(255,200,50,0.08) 0%, transparent 60%)'
+  },
+  'cave-art': { 
+    gradient: 'radial-gradient(ellipse at center, #1a1000 0%, #0d0800 50%, #050400 100%)',
+    overlay: 'radial-gradient(circle at 20% 30%, rgba(150,80,20,0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(100,50,10,0.08) 0%, transparent 35%)'
+  },
+  'cathedral': { 
+    gradient: 'linear-gradient(180deg, #0a0800 0%, #1a1200 30%, #050400 100%)',
+    overlay: 'repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,180,0,0.02) 30px, rgba(255,180,0,0.02) 31px)'
+  },
+  'abyss': { 
+    gradient: 'radial-gradient(ellipse at center, #001515 0%, #000d0d 50%, #000505 100%)',
+    overlay: 'radial-gradient(circle at 50% 100%, rgba(0,150,150,0.06) 0%, transparent 60%)'
+  },
+  'void': { 
+    gradient: 'radial-gradient(ellipse at center, #111 0%, #060606 60%, #000 100%)',
+    overlay: null
+  }
+};
+
+function setBg(key, el) {
+  document.querySelectorAll('.bg-opt').forEach(o => o.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const overlay = document.getElementById('bg-overlay');
+  const cfg = bgConfigs[key] || bgConfigs['none'];
+  if(!cfg.gradient) {
+    overlay.style.background = 'none';
+    overlay.style.opacity = '0';
+  } else {
+    const combined = cfg.overlay ? cfg.gradient + ', ' + cfg.overlay : cfg.gradient;
+    overlay.style.background = combined;
+    overlay.style.opacity = '1';
+  }
+  document.getElementById('bg-picker').classList.remove('show');
+  showNotif('🖼 BACKGROUND SET');
 }
 
 buildChooser();
