@@ -80,8 +80,6 @@
   
   /* Virtual outfit overlay */
   #outfit-overlay { position:absolute; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:400px; height:100%; z-index:4; pointer-events:none; display:flex; flex-direction:column; align-items:center; }
-  #hat-layer { position:absolute; top:-2%; width:70%; display:none; }
-  #shirt-layer { position:absolute; bottom:0; width:100%; display:none; }
   #mask-layer { position:absolute; top:8%; width:55%; display:none; }
 
   /* Background selector */
@@ -110,7 +108,7 @@
 <div id="studio" class="panel active">
   <div id="bg-overlay"></div>
   <canvas id="rorschach-canvas"></canvas>
-  <div id="outfit-overlay"><img id="hat-layer" src=""/><img id="mask-layer" src=""/><img id="shirt-layer" src=""/></div>
+  <div id="outfit-overlay"><img id="mask-layer" src=""/></div>
   <video id="bg-video-el" autoplay muted loop playsinline></video>
   <video id="cam" autoplay muted playsinline></video>
   <div id="no-cam">📷 Camera optional — tap any script to begin</div>
@@ -120,29 +118,9 @@
     <div id="chooser-list"></div>
   </div>
   <div id="closet-panel">
-    <div class="closet-section">— MASKS —</div>
-    <div class="closet-item" onclick="wearItem('mask','rorschach')"><span class="ci-icon">🎭</span><span class="ci-name">Rorschach (Watchmen)</span></div>
-    <div class="closet-item" onclick="wearItem('mask','sewn')"><span class="ci-icon">🪡</span><span class="ci-name">Sewn Lips (Signature)</span></div>
-    <div class="closet-item" onclick="wearItem('mask','lincoln')"><span class="ci-icon">🎩</span><span class="ci-name">Lincoln</span></div>
-    <div class="closet-item" onclick="wearItem('mask','washington')"><span class="ci-icon">🦅</span><span class="ci-name">Washington</span></div>
-    <div class="closet-item" onclick="wearItem('mask','obama')"><span class="ci-icon">⭐</span><span class="ci-name">Obama</span></div>
-    <div class="closet-item" onclick="wearItem('mask','mlk')"><span class="ci-icon">✊</span><span class="ci-name">MLK Jr.</span></div>
-    <div class="closet-item" onclick="wearItem('mask','malcolm')"><span class="ci-icon">🔥</span><span class="ci-name">Malcolm X</span></div>
-    <div class="closet-item" onclick="wearItem('mask','joker')"><span class="ci-icon">🃏</span><span class="ci-name">Joker (Dark)</span></div>
-    <div class="closet-item" onclick="wearItem('mask','skull')"><span class="ci-icon">💀</span><span class="ci-name">Skull / Death</span></div>
-    <div class="closet-item" onclick="wearItem('mask','v')"><span class="ci-icon">🗡️</span><span class="ci-name">V for Vendetta</span></div>
-    <div class="closet-item" onclick="wearItem('mask','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Mask</span></div>
-    <div class="closet-section">— HATS —</div>
-    <div class="closet-item" onclick="wearItem('hat','tophat')"><span class="ci-icon">🎩</span><span class="ci-name">Top Hat (Dark)</span></div>
-    <div class="closet-item" onclick="wearItem('hat','hood')"><span class="ci-icon">🕵️</span><span class="ci-name">Dark Hood</span></div>
-    <div class="closet-item" onclick="wearItem('hat','crown')"><span class="ci-icon">👑</span><span class="ci-name">Crown</span></div>
-    <div class="closet-item" onclick="wearItem('hat','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Hat</span></div>
-    <div class="closet-section">— SHIRTS —</div>
-    <div class="closet-item" onclick="wearItem('shirt','suit-black')"><span class="ci-icon">🕴️</span><span class="ci-name">Black Suit</span></div>
-    <div class="closet-item" onclick="wearItem('shirt','suit-dark')"><span class="ci-icon">🤵</span><span class="ci-name">Dark Charcoal Suit</span></div>
-    <div class="closet-item" onclick="wearItem('shirt','buttonup-black')"><span class="ci-icon">👔</span><span class="ci-name">Black Button-Up</span></div>
-    <div class="closet-item" onclick="wearItem('shirt','buttonup-red')"><span class="ci-icon">🔴</span><span class="ci-name">Deep Red Button-Up</span></div>
-    <div class="closet-item" onclick="wearItem('shirt','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove Shirt</span></div>
+    <div class="closet-section">— MASK —</div>
+    <div class="closet-item active-item" onclick="wearItem('mask','rorschach')"><span class="ci-icon">🎭</span><span class="ci-name">Rorschach</span></div>
+    <div class="closet-item" onclick="wearItem('mask','none')"><span class="ci-icon">❌</span><span class="ci-name">Remove</span></div>
   </div>
   <div id="bg-picker">
     <div class="bg-opt active" style="background:#000;" onclick="setBg('none',this)"><span>🖤 NONE</span></div>
@@ -171,7 +149,7 @@
       <button class="ctrl" onclick="changeSpeed(0.2)">+</button>
       <button class="ctrl" id="play-btn" onclick="togglePlay()">▶ PLAY</button>
       <div class="spacer"></div>
-      <button class="ctrl" onclick="toggleCloset()" title="Virtual Closet">👔 CLOSET</button>
+      <button class="ctrl" onclick="toggleCloset()" title="Virtual Closet">🎭 MASK</button>
       <button class="ctrl" onclick="toggleBgPicker()" title="Change background">🖼 BG</button>
       <button class="ctrl red" id="rec-btn" onclick="toggleRec()">⏺ REC</button>
     </div>
@@ -1095,12 +1073,7 @@ function drawSkullMask() {
   ctx.restore();
 }
 
-const outfitColors = {
-  'suit-black': ['#050505','#111','Black Suit'],
-  'suit-dark': ['#1a1a2a','#0d0d1a','Charcoal Suit'],
-  'buttonup-black': ['#080808','#111','Black Button-Up'],
-  'buttonup-red': ['#3a0505','#1a0202','Red Button-Up'],
-};
+
 
 function wearItem(type, key) {
   document.querySelectorAll('.closet-item').forEach(i=>i.classList.remove('active'));
@@ -1118,74 +1091,10 @@ function wearItem(type, key) {
       drawVMask();
     } else if(key==='skull') {
       drawSkullMask();
-    } else if(key==='sewn') {
-      drawTextMask('', '#e8e4dc','#d0ccc4', true);
-    } else if(key==='lincoln') {
-      drawTextMask('LINCOLN', '#1a1008','#0d0804', true);
-    } else if(key==='washington') {
-      drawTextMask('WASHINGTON', '#0d1a08','#081008', true);
-    } else if(key==='obama') {
-      drawTextMask('OBAMA', '#0d0d1a','#08080f', true);
-    } else if(key==='mlk') {
-      drawTextMask('MLK', '#1a0808','#0f0404', true);
-    } else if(key==='malcolm') {
-      drawTextMask('MALCOLM X', '#1a1000','#0d0800', true);
-    }
+  
   }
   
-  if(type === 'shirt') {
-    const sl = document.getElementById('shirt-layer');
-    if(key==='none') { sl.style.display='none'; return; }
-    const cfg = outfitColors[key];
-    if(cfg) {
-      // Draw shirt on a temp canvas and set as data URL
-      const tc = document.createElement('canvas'); tc.width=400; tc.height=300;
-      const tx = tc.getContext('2d');
-      const sg = tx.createLinearGradient(0,0,400,300);
-      sg.addColorStop(0,cfg[0]); sg.addColorStop(1,cfg[1]);
-      tx.fillStyle=sg;
-      // shirt shape
-      tx.beginPath();
-      tx.moveTo(80,0); tx.lineTo(0,60); tx.lineTo(0,300); tx.lineTo(400,300); tx.lineTo(400,60); tx.lineTo(320,0);
-      tx.lineTo(220,30); tx.lineTo(200,80); tx.lineTo(180,30); tx.closePath();
-      tx.fill();
-      // collar
-      tx.fillStyle='rgba(255,255,255,0.08)';
-      tx.beginPath(); tx.moveTo(160,0); tx.lineTo(200,60); tx.lineTo(240,0); tx.closePath(); tx.fill();
-      sl.src=tc.toDataURL(); sl.style.display='block';
-    }
-  }
-
-  if(type === 'hat') {
-    const hl = document.getElementById('hat-layer');
-    if(key==='none') { hl.style.display='none'; return; }
-    const tc = document.createElement('canvas'); tc.width=300; tc.height=180;
-    const tx = tc.getContext('2d');
-    if(key==='tophat') {
-      tx.fillStyle='#0a0a0a';
-      tx.fillRect(80,40,140,120); // brim
-      tx.fillRect(60,140,180,18);
-      tx.fillStyle='#1a1008';
-      tx.fillRect(90,38,120,6); // band
-    } else if(key==='hood') {
-      tx.fillStyle='#0d0d1a';
-      tx.beginPath(); tx.arc(150,80,100,Math.PI,0); tx.lineTo(270,180); tx.lineTo(30,180); tx.closePath(); tx.fill();
-      tx.fillStyle='#050508';
-      tx.beginPath(); tx.ellipse(150,170,80,30,0,0,Math.PI*2); tx.fill();
-    } else if(key==='crown') {
-      tx.fillStyle='#b8960c';
-      tx.beginPath();
-      tx.moveTo(40,160); tx.lineTo(40,60); tx.lineTo(90,100); tx.lineTo(150,40); tx.lineTo(210,100); tx.lineTo(260,60); tx.lineTo(260,160); tx.closePath();
-      tx.fill();
-      // gems
-      ['#c0392b','#2980b9','#27ae60'].forEach((c,i)=>{
-        tx.fillStyle=c; tx.beginPath(); tx.arc(80+i*80,80,10,0,Math.PI*2); tx.fill();
-      });
-    }
-    hl.src=tc.toDataURL(); hl.style.display='block';
-  }
-
-  document.getElementById('closet-panel').classList.remove('show');
+    document.getElementById('closet-panel').classList.remove('show');
   showNotif('👔 OUTFIT UPDATED');
 }
 
