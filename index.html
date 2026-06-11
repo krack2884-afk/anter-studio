@@ -695,48 +695,51 @@ function drawRorschach() {
     );
   }
 
-  // ── RENDER FLUID INK ON MASK VIA PIXEL SAMPLING ───────────
-  // Use an offscreen canvas at reduced resolution for speed
-  const RES = 3; // sample every 3px
-  const cols = Math.ceil(rx * 2 / RES);
-  const rows = Math.ceil(ry * 2 / RES);
+  // ── RENDER FLUID INK — offscreen low-res then scale up ───
+  // Render at 80x120 then draw scaled — fast on mobile
+  const OFF_W = 80, OFF_H = 120;
+  const off = document.createElement('canvas');
+  off.width = OFF_W; off.height = OFF_H;
+  const octx = off.getContext('2d');
+  const imgData = octx.createImageData(OFF_W, OFF_H);
+  const d = imgData.data;
 
-  for(let row = 0; row <= rows; row++) {
-    for(let col = 0; col <= cols; col++) {
-      // map col/row to face-relative coords
-      const fx = (col / cols) - 0.5;  // -0.5 to 0.5
-      const fy = (row / rows) - 0.5;
+  for(let row = 0; row < OFF_H; row++) {
+    for(let col = 0; col < OFF_W; col++) {
+      const fx = (col / OFF_W) - 0.5;
+      const fy = (row / OFF_H) - 0.5;
 
-      // skip pixels outside the ellipse
-      if((fx*fx)/(0.5*0.5) + (fy*fy)/(0.5*0.5) > 1) continue;
+      // skip outside ellipse
+      if((fx*fx*4) + (fy*fy*4) > 1) continue;
 
-      // actual pixel position
-      const px = cx + fx * rx * 2;
-      const py = cy + fy * ry * 2;
+      // mirror for symmetry
+      const sfx = Math.abs(fx) * 2.8;
+      const sfy = fy * 2.8;
 
-      // SYMMETRY: fold left half onto right (mirror x)
-      const sfx = Math.abs(fx) * 2.2; // 0..1.1
-      const sfy = fy * 2.0;           // -1..1
-
-      // noise value at this point
-      const n = noise(sfx * 2.8, sfy * 2.8, t);
-
-      // threshold: above 0 = black ink, below = white mask
+      const n = noise(sfx, sfy, t);
       const isInk = n > 0.05;
 
-      // edge softness — feather near ellipse boundary
-      const edgeDist = 1 - Math.sqrt((fx*fx + fy*fy) / 0.25);
-      const alpha = Math.min(1, edgeDist * 4);
+      // edge feather
+      const edgeDist = 1 - Math.sqrt(fx*fx*4 + fy*fy*4);
+      const alpha = Math.min(255, edgeDist * 4 * 255);
 
+      const idx = (row * OFF_W + col) * 4;
       if(isInk) {
-        ctx.fillStyle = `rgba(6,3,1,${0.92 * alpha})`;
+        d[idx]=6; d[idx+1]=3; d[idx+2]=1; d[idx+3]=Math.floor(alpha*0.93);
       } else {
-        ctx.fillStyle = `rgba(220,210,190,${0.88 * alpha})`;
+        d[idx]=218; d[idx+1]=208; d[idx+2]=188; d[idx+3]=Math.floor(alpha*0.9);
       }
-
-      ctx.fillRect(px - RES/2, py - RES/2, RES + 1, RES + 1);
     }
   }
+  octx.putImageData(imgData, 0, 0);
+
+  // Draw scaled up onto main canvas, clipped to face ellipse
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+  ctx.clip();
+  ctx.drawImage(off, cx - rx, cy - ry, rx*2, ry*2);
+  ctx.restore();
 
   // ── MASK EDGE — dark oval border ─────────────────────────
   ctx.save();
@@ -846,174 +849,6 @@ function drawRorschach() {
 
 
 
-function drawTextMask(label, color1, color2, stitched) {
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'block';
-  rorschachActive = false;
-  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
-  
-  const W = canvas.width = canvas.offsetWidth;
-  const H = canvas.height = canvas.offsetHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-
-  const cx = W*0.5, cy = H*0.28, rx = W*0.18, ry = H*0.26;
-
-  // Mask base
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  const grad = ctx.createLinearGradient(cx-rx, cy-ry, cx+rx, cy+ry);
-  grad.addColorStop(0, color1);
-  grad.addColorStop(1, color2);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.restore();
-
-  // Label
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
-  ctx.clip();
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  ctx.font = `bold ${rx*0.28}px serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(label, cx, cy - ry*0.1);
-
-  if(stitched) {
-    const mouthY = cy + ry * 0.45;
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - rx*0.25, mouthY);
-    ctx.lineTo(cx + rx*0.25, mouthY);
-    ctx.stroke();
-    for(let i=-3;i<=3;i++){
-      const sx = cx + (i*rx*0.09);
-      ctx.beginPath(); ctx.moveTo(sx,mouthY-rx*0.04); ctx.lineTo(sx,mouthY+rx*0.04); ctx.stroke();
-    }
-  }
-  ctx.restore();
-}
-
-function drawJokerMask() {
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'block';
-  rorschachActive = false;
-  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
-  const W = canvas.width = canvas.offsetWidth;
-  const H = canvas.height = canvas.offsetHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.fillStyle='#f5e6c8'; ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.clip();
-  // green hair suggestion top
-  ctx.fillStyle='#1a4a1a';
-  ctx.fillRect(cx-rx,cy-ry,rx*2,ry*0.3);
-  // red mouth slash
-  ctx.strokeStyle='#8b0000'; ctx.lineWidth=rx*0.08;
-  ctx.beginPath();
-  ctx.moveTo(cx-rx*0.35,cy+ry*0.2);
-  ctx.quadraticCurveTo(cx,cy+ry*0.5,cx+rx*0.35,cy+ry*0.2);
-  ctx.stroke();
-  // sewn stitches on smile
-  ctx.strokeStyle='#111'; ctx.lineWidth=1.5;
-  for(let i=0;i<6;i++){
-    const ang = Math.PI*0.15 + i*(Math.PI*0.7/5);
-    const mx = cx + rx*0.35*Math.cos(ang-Math.PI*0.5)*2.2;
-    const my = cy + ry*0.35 + ry*0.15*Math.sin(ang);
-    ctx.beginPath(); ctx.moveTo(mx,my-4); ctx.lineTo(mx,my+4); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function drawVMask() {
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'block';
-  rorschachActive = false;
-  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
-  const W = canvas.width = canvas.offsetWidth;
-  const H = canvas.height = canvas.offsetHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.fillStyle='#f5f0e8'; ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.clip();
-  // Guy Fawkes mustache & smile
-  ctx.fillStyle='#1a0a00';
-  ctx.font=`${rx*0.25}px serif`;
-  ctx.textAlign='center';
-  ctx.fillText('∿∿∿', cx, cy+ry*0.15);
-  ctx.font=`${rx*0.15}px serif`;
-  ctx.fillText('——', cx, cy+ry*0.35);
-  // rosy cheeks
-  ctx.fillStyle='rgba(180,30,30,0.3)';
-  ctx.beginPath(); ctx.arc(cx-rx*0.45,cy+ry*0.1,rx*0.15,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx+rx*0.45,cy+ry*0.1,rx*0.15,0,Math.PI*2); ctx.fill();
-  // sewn mouth
-  const mouthY=cy+ry*0.45;
-  ctx.strokeStyle='#111'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(cx-rx*0.25,mouthY); ctx.lineTo(cx+rx*0.25,mouthY); ctx.stroke();
-  for(let i=-3;i<=3;i++){const sx=cx+(i*rx*0.09);ctx.beginPath();ctx.moveTo(sx,mouthY-4);ctx.lineTo(sx,mouthY+4);ctx.stroke();}
-  ctx.restore();
-}
-
-function drawSkullMask() {
-  const canvas = document.getElementById('rorschach-canvas');
-  canvas.style.display = 'block';
-  rorschachActive = false;
-  if(rorschachFrame) cancelAnimationFrame(rorschachFrame);
-  const W = canvas.width = canvas.offsetWidth;
-  const H = canvas.height = canvas.offsetHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  const cx=W*0.5,cy=H*0.28,rx=W*0.18,ry=H*0.26;
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.fillStyle='#e8e8e8'; ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
-  ctx.clip();
-  // eye sockets
-  ctx.fillStyle='#111';
-  ctx.beginPath(); ctx.ellipse(cx-rx*0.3,cy-ry*0.05,rx*0.2,ry*0.18,0,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx+rx*0.3,cy-ry*0.05,rx*0.2,ry*0.18,0,0,Math.PI*2); ctx.fill();
-  // nose cavity
-  ctx.beginPath(); 
-  ctx.moveTo(cx,cy+ry*0.2); ctx.lineTo(cx-rx*0.08,cy+ry*0.35); ctx.lineTo(cx+rx*0.08,cy+ry*0.35); 
-  ctx.fill();
-  // teeth
-  ctx.fillStyle='#111';
-  const toothY=cy+ry*0.5;
-  for(let i=-3;i<=3;i++){
-    ctx.fillRect(cx+i*rx*0.1-rx*0.04,toothY,rx*0.07,ry*0.08);
-  }
-  // sewn mouth
-  ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(cx-rx*0.35,toothY); ctx.lineTo(cx+rx*0.35,toothY); ctx.stroke();
-  ctx.restore();
-}
-
-
 
 function wearItem(type, key) {
   document.querySelectorAll('.closet-item').forEach(i=>i.classList.remove('active'));
@@ -1025,17 +860,10 @@ function wearItem(type, key) {
       document.getElementById('rorschach-canvas').style.display='none'; 
     } else if(key==='rorschach') {
       startRorschach();
-    } else if(key==='joker') {
-      drawJokerMask();
-    } else if(key==='v') {
-      drawVMask();
-    } else if(key==='skull') {
-      drawSkullMask();
-  
-  }
-  
-    document.getElementById('closet-panel').classList.remove('show');
-  showNotif('👔 OUTFIT UPDATED');
+      }
+
+  document.getElementById('closet-panel').classList.remove('show');
+  showNotif('🎭 MASK UPDATED');
 }
 
 function toggleBgPicker() {
@@ -1331,6 +1159,7 @@ function setBg(key, el) {
   }
   document.getElementById('bg-picker').classList.remove('show');
   showNotif('🖼 BACKGROUND SET');
+}
 }
 
 buildChooser();
