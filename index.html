@@ -121,6 +121,18 @@
   .track-status { font-size:0.9rem; color:#555; min-width:20px; text-align:center; }
   .track-card.active-track .track-status { color:var(--gold); }
   /* ──────────────────────────────────────────────── */
+
+  /* ══ AUTO VOICE PANEL ══════════════════════════════ */
+  #voice-panel { position:relative; overflow:hidden; }
+  #voice-bg-canvas { position:absolute; top:0; left:0; width:100%; height:100%; z-index:0; }
+  .voice-card { background:rgba(10,10,10,0.85); border:1px solid #222; border-radius:10px; padding:16px; backdrop-filter:blur(4px); }
+  .voice-step-label { font-size:0.65rem; color:var(--gold); letter-spacing:0.2em; font-weight:700; margin-bottom:2px; }
+  .voice-bg-opt { transition:all 0.2s; }
+  .voice-bg-opt.active-bg { border-color:var(--gold) !important; transform:scale(1.04); }
+  #voice-generate-btn:hover { opacity:0.9; transform:scale(1.02); }
+  #voice-status.speaking { color:var(--gold); animation: pulse-gold 1.4s infinite; }
+  @keyframes pulse-gold { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  /* ══════════════════════════════════════════════════ */
 </style>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
@@ -145,6 +157,7 @@
   <button class="tab active" onclick="switchTab('studio',this)">🎬 STUDIO</button>
   <button class="tab" onclick="switchTab('scripts',this)">📋 SCRIPTS</button>
   <button class="tab" onclick="switchTab('files',this)">📁 FILES</button>
+  <button class="tab" onclick="switchTab('voice',this)">🎙 AUTO VOICE</button>
   <div class="spacer"></div>
   <div id="rec-dot"></div>
 </div>
@@ -216,6 +229,122 @@
       <input id="api-key-input" type="password" placeholder="Paste your Udio API key here..." style="width:100%;background:#111;border:1px solid #2a2a2a;color:#fff;padding:12px;border-radius:6px;font-family:monospace;font-size:0.85rem;" />
       <button class="save-btn" onclick="saveApiKey()" style="margin-top:10px;background:var(--gold);color:#000;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-weight:700;letter-spacing:0.1em;">SAVE & ACTIVATE</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!--                AUTO VOICE PANEL                   -->
+<!-- ══════════════════════════════════════════════════ -->
+<div id="voice-panel" class="panel">
+  <canvas id="voice-bg-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+  <div id="voice-ui" style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;padding:20px 16px 90px;overflow-y:auto;gap:18px;max-width:640px;margin:0 auto;">
+
+    <div style="text-align:center;padding-top:10px;">
+      <div style="font-size:1.6rem;letter-spacing:0.3em;color:var(--gold);">🎙 AUTO VOICE</div>
+      <div style="font-size:0.7rem;color:#555;letter-spacing:0.2em;margin-top:4px;">SELECT SCRIPT · PICK SCENE · GENERATE VIDEO</div>
+    </div>
+
+    <!-- STEP 1: SCRIPT SELECT -->
+    <div class="voice-card" style="width:100%;">
+      <div class="voice-step-label">① CHOOSE SCRIPT</div>
+      <select id="voice-script-select" style="width:100%;background:#0d0d0d;color:#fff;border:1px solid #2a2a2a;padding:12px;border-radius:6px;font-size:0.85rem;font-family:Georgia,serif;letter-spacing:0.05em;">
+        <option value="">— Select a script —</option>
+      </select>
+      <div id="voice-script-preview" style="margin-top:10px;color:#555;font-size:0.72rem;line-height:1.7;max-height:80px;overflow:hidden;font-style:italic;"></div>
+    </div>
+
+    <!-- STEP 2: BACKGROUND SCENE -->
+    <div class="voice-card" style="width:100%;">
+      <div class="voice-step-label">② CHOOSE SCENE</div>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <div class="voice-bg-opt active-bg" id="vbg-fire" onclick="setVoiceBg('fire-cave',this)" style="flex:1;background:linear-gradient(135deg,#3d1a00,#0d0d0d);border:2px solid var(--gold);border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.4rem;">🔥</div>
+          <div style="font-size:0.65rem;color:#ccc;letter-spacing:0.1em;margin-top:4px;">FIRE CAVE</div>
+        </div>
+        <div class="voice-bg-opt" id="vbg-prison" onclick="setVoiceBg('prison',this)" style="flex:1;background:linear-gradient(135deg,#080810,#1a1a2a);border:2px solid #2a2a2a;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.4rem;">⛓️</div>
+          <div style="font-size:0.65rem;color:#ccc;letter-spacing:0.1em;margin-top:4px;">DUNGEON</div>
+        </div>
+        <div class="voice-bg-opt" id="vbg-monastery" onclick="setVoiceBg('monastery',this)" style="flex:1;background:linear-gradient(135deg,#0d1a0d,#050f05);border:2px solid #2a2a2a;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;">
+          <div style="font-size:1.4rem;">🕯️</div>
+          <div style="font-size:0.65rem;color:#ccc;letter-spacing:0.1em;margin-top:4px;">MONASTERY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: VOICE SETTINGS -->
+    <div class="voice-card" style="width:100%;">
+      <div class="voice-step-label">③ VOICE SETTINGS</div>
+      <div style="display:flex;gap:12px;margin-top:8px;align-items:center;flex-wrap:wrap;">
+        <div style="flex:1;min-width:140px;">
+          <label style="color:#555;font-size:0.65rem;letter-spacing:0.1em;display:block;margin-bottom:4px;">SPEED</label>
+          <input type="range" id="tts-rate" min="0.5" max="1.4" step="0.05" value="0.82"
+            style="width:100%;accent-color:var(--gold);" oninput="document.getElementById('tts-rate-lbl').textContent=parseFloat(this.value).toFixed(2)+'×'">
+          <span id="tts-rate-lbl" style="color:var(--gold);font-size:0.72rem;">0.82×</span>
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="color:#555;font-size:0.65rem;letter-spacing:0.1em;display:block;margin-bottom:4px;">PITCH</label>
+          <input type="range" id="tts-pitch" min="0.3" max="1.1" step="0.05" value="0.6"
+            style="width:100%;accent-color:var(--gold);" oninput="document.getElementById('tts-pitch-lbl').textContent=parseFloat(this.value).toFixed(2)">
+          <span id="tts-pitch-lbl" style="color:var(--gold);font-size:0.72rem;">0.60</span>
+        </div>
+        <div style="flex:1;min-width:140px;">
+          <label style="color:#555;font-size:0.65rem;letter-spacing:0.1em;display:block;margin-bottom:4px;">MUSIC VOL</label>
+          <input type="range" id="tts-music-vol" min="0" max="0.6" step="0.05" value="0.25"
+            style="width:100%;accent-color:var(--gold);" oninput="setTtsMusicVol(this.value);document.getElementById('tts-mvol-lbl').textContent=Math.round(this.value*100)+'%'">
+          <span id="tts-mvol-lbl" style="color:var(--gold);font-size:0.72rem;">25%</span>
+        </div>
+      </div>
+      <!-- Voice picker -->
+      <div style="margin-top:10px;">
+        <label style="color:#555;font-size:0.65rem;letter-spacing:0.1em;display:block;margin-bottom:4px;">VOICE (deep = best)</label>
+        <select id="tts-voice-select" style="width:100%;background:#0d0d0d;color:#fff;border:1px solid #2a2a2a;padding:10px;border-radius:6px;font-size:0.8rem;"></select>
+      </div>
+    </div>
+
+    <!-- STEP 4: MUSIC TRACK -->
+    <div class="voice-card" style="width:100%;">
+      <div class="voice-step-label">④ BACKGROUND MUSIC (OPTIONAL)</div>
+      <select id="tts-track-select" style="width:100%;background:#0d0d0d;color:#fff;border:1px solid #2a2a2a;padding:12px;border-radius:6px;font-size:0.8rem;margin-top:6px;">
+        <option value="">— No music —</option>
+        <option value="t1">⚔️ War March — Heavy stomp / War drums</option>
+        <option value="t2">👑 The Chosen — Spiritual warrior / Epic strings</option>
+        <option value="t3">🌀 Unmappable — Dark pulse / Mystery power</option>
+        <option value="t4">🕊️ Covenant — Maximum weight / Organ chord</option>
+        <option value="t5">🔥 Resurrection — Quiet rise → Triumph</option>
+        <option value="t6">🎭 The Marked One — Relentless dark minor</option>
+      </select>
+    </div>
+
+    <!-- CONTROLS -->
+    <div style="width:100%;display:flex;gap:10px;flex-wrap:wrap;">
+      <button id="voice-generate-btn" class="ctrl" onclick="startAutoVoice()"
+        style="flex:2;padding:16px;font-size:0.9rem;letter-spacing:0.15em;background:var(--gold);color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;">
+        ▶ GENERATE &amp; PLAY
+      </button>
+      <button class="ctrl" onclick="stopAutoVoice()"
+        style="flex:1;padding:16px;font-size:0.8rem;letter-spacing:0.1em;background:#1a1a1a;color:#888;border:1px solid #2a2a2a;border-radius:6px;cursor:pointer;">
+        ■ STOP
+      </button>
+    </div>
+
+    <!-- STATUS -->
+    <div id="voice-status" style="width:100%;text-align:center;color:#555;font-size:0.72rem;letter-spacing:0.12em;min-height:20px;"></div>
+
+    <!-- RECORD & EXPORT -->
+    <div class="voice-card" style="width:100%;border-color:#1a2a1a;">
+      <div class="voice-step-label" style="color:#3a7a3a;">⬇ EXPORT VIDEO</div>
+      <p style="color:#444;font-size:0.7rem;margin:6px 0 10px;line-height:1.8;">Hit <strong style="color:#888;">▶ GENERATE</strong> first to start voice + background. Then hit <strong style="color:#888;">⏺ RECORD</strong> — it captures the scene. When voice ends, it auto-saves a <strong style="color:#888;">.webm</strong> you can drag into DaVinci Resolve.</p>
+      <div style="display:flex;gap:10px;">
+        <button id="voice-rec-btn" class="ctrl" onclick="toggleVoiceRec()"
+          style="flex:1;padding:12px;font-size:0.78rem;letter-spacing:0.1em;background:#0a1a0a;border:1px solid #2a4a2a;color:#5a9a5a;border-radius:6px;cursor:pointer;">
+          ⏺ START RECORDING
+        </button>
+        <div id="voice-rec-status" style="flex:1;display:flex;align-items:center;justify-content:center;color:#555;font-size:0.7rem;letter-spacing:0.1em;">READY</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -548,7 +677,7 @@ function startCamera() {
 function switchTab(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById({studio:'studio',scripts:'scripts-panel',files:'files-panel'}[name]).classList.add('active');
+  document.getElementById({studio:'studio',scripts:'scripts-panel',files:'files-panel',voice:'voice-panel'}[name]).classList.add('active');
   if(el) el.classList.add('active');
   if(name==='scripts') buildScriptsPanel();
 }
@@ -1350,6 +1479,279 @@ function setMusicVol(val) {
   document.getElementById('vol-label').textContent = val + '%';
 }
 // ────────────────────────────────────────────────────
+
+
+// ══════════════════════════════════════════════════════
+//                   AUTO VOICE ENGINE
+// ══════════════════════════════════════════════════════
+
+let voiceBgKey = 'fire-cave';
+let voiceAnimFrame = null;
+let voiceSpeaking = false;
+let voiceRecorder = null;
+let voiceRecChunks = [];
+let voiceRecording = false;
+let voiceBgAnimTime = 0;
+let voiceBgAnimId = null;
+
+// ── Populate voice script dropdown ──
+function buildVoicePanel() {
+  const sel = document.getElementById('voice-script-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select a script —</option>';
+  scripts.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.id + ' — ' + s.title;
+    sel.appendChild(opt);
+  });
+
+  // Populate TTS voices
+  function loadVoices() {
+    const vsel = document.getElementById('tts-voice-select');
+    if (!vsel) return;
+    const voices = speechSynthesis.getVoices();
+    vsel.innerHTML = '';
+    // prefer deep/male voices first
+    const preferred = voices.filter(v =>
+      /male|deep|david|mark|daniel|alex|fred|ralph|bruce|zarvox/i.test(v.name) ||
+      /en[-_]US|en[-_]GB/i.test(v.lang)
+    );
+    const rest = voices.filter(v => !preferred.includes(v));
+    [...preferred, ...rest].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v.name;
+      o.textContent = v.name + ' (' + v.lang + ')';
+      vsel.appendChild(o);
+    });
+  }
+  loadVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  // Preview text when script selected
+  sel.addEventListener('change', () => {
+    const s = scripts.find(x => x.id === sel.value);
+    const preview = document.getElementById('voice-script-preview');
+    if (s && preview) {
+      preview.textContent = s.body.substring(0, 180).trim() + '…';
+    }
+  });
+}
+
+// ── Set voice background scene ──
+function setVoiceBg(key, el) {
+  voiceBgKey = key;
+  document.querySelectorAll('.voice-bg-opt').forEach(o => o.classList.remove('active-bg'));
+  if (el) el.classList.add('active-bg');
+  drawVoiceBgNow();
+}
+
+function drawVoiceBgNow() {
+  const canvas = document.getElementById('voice-bg-canvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || window.innerWidth;
+  canvas.height = canvas.offsetHeight || window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  if (bgDrawers[voiceBgKey]) bgDrawers[voiceBgKey](ctx, canvas.width, canvas.height);
+}
+
+// ── Animated background loop while speaking ──
+function startVoiceBgAnimation() {
+  const canvas = document.getElementById('voice-bg-canvas');
+  if (!canvas) return;
+  stopVoiceBgAnimation();
+  function frame() {
+    voiceBgAnimTime += 0.008;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    if (bgDrawers[voiceBgKey]) bgDrawers[voiceBgKey](ctx, canvas.width, canvas.height);
+    // Add subtle breathing vignette while speaking
+    if (voiceSpeaking) {
+      const pulse = 0.12 + Math.sin(voiceBgAnimTime * 2.5) * 0.06;
+      const vign = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.height*0.2,
+                                             canvas.width/2, canvas.height/2, canvas.height*0.9);
+      vign.addColorStop(0, 'transparent');
+      vign.addColorStop(1, `rgba(0,0,0,${pulse + 0.5})`);
+      ctx.fillStyle = vign;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    voiceBgAnimId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function stopVoiceBgAnimation() {
+  if (voiceBgAnimId) { cancelAnimationFrame(voiceBgAnimId); voiceBgAnimId = null; }
+}
+
+// ── Music for voice mode ──
+function setTtsMusicVol(v) {
+  const a = document.getElementById('bg-music');
+  if (a) a.volume = parseFloat(v);
+}
+
+function startVoiceMusic() {
+  const trackId = document.getElementById('tts-track-select').value;
+  if (!trackId) return;
+  const track = TRACKS.find(t => t.id === trackId);
+  if (!track) return;
+  const a = document.getElementById('bg-music');
+  a.src = track.url;
+  a.volume = parseFloat(document.getElementById('tts-music-vol').value);
+  a.play().catch(() => {});
+}
+
+function stopVoiceMusic() {
+  const a = document.getElementById('bg-music');
+  if (a) { a.pause(); a.src = ''; }
+}
+
+// ── MAIN: Start Auto Voice ──
+function startAutoVoice() {
+  const sel = document.getElementById('voice-script-select');
+  const scriptId = sel.value;
+  if (!scriptId) { showNotif('⚠️ SELECT A SCRIPT FIRST'); return; }
+  const script = scripts.find(s => s.id === scriptId);
+  if (!script) return;
+
+  // Stop anything playing
+  stopAutoVoice();
+
+  // Draw background
+  drawVoiceBgNow();
+  startVoiceBgAnimation();
+
+  // Start music
+  startVoiceMusic();
+
+  // Set status
+  const statusEl = document.getElementById('voice-status');
+  statusEl.textContent = '🎙 PREPARING VOICE…';
+  statusEl.classList.add('speaking');
+
+  // Build utterance
+  const rate = parseFloat(document.getElementById('tts-rate').value);
+  const pitch = parseFloat(document.getElementById('tts-pitch').value);
+  const voiceName = document.getElementById('tts-voice-select').value;
+
+  const fullText = script.body + (script.twinFlame ? '\n\n' + script.twinFlame : '');
+
+  const utter = new SpeechSynthesisUtterance(fullText);
+  utter.rate = rate;
+  utter.pitch = pitch;
+  utter.volume = 1;
+
+  if (voiceName) {
+    const voices = speechSynthesis.getVoices();
+    const match = voices.find(v => v.name === voiceName);
+    if (match) utter.voice = match;
+  }
+
+  utter.onstart = () => {
+    voiceSpeaking = true;
+    statusEl.textContent = '🎙 SPEAKING — ' + script.title;
+    document.getElementById('voice-generate-btn').textContent = '🔊 PLAYING…';
+    showNotif('🎙 AUTO VOICE ACTIVE');
+  };
+
+  utter.onend = () => {
+    voiceSpeaking = false;
+    statusEl.textContent = '✅ COMPLETE — ' + script.title;
+    statusEl.classList.remove('speaking');
+    document.getElementById('voice-generate-btn').textContent = '▶ GENERATE & PLAY';
+    stopVoiceMusic();
+    // Auto stop recording
+    if (voiceRecording) stopVoiceRec();
+    showNotif('✅ VOICE COMPLETE');
+  };
+
+  utter.onerror = (e) => {
+    voiceSpeaking = false;
+    statusEl.textContent = '⚠️ ' + (e.error || 'Voice error');
+    statusEl.classList.remove('speaking');
+    document.getElementById('voice-generate-btn').textContent = '▶ GENERATE & PLAY';
+  };
+
+  speechSynthesis.speak(utter);
+}
+
+function stopAutoVoice() {
+  speechSynthesis.cancel();
+  voiceSpeaking = false;
+  stopVoiceMusic();
+  stopVoiceBgAnimation();
+  drawVoiceBgNow();
+  const statusEl = document.getElementById('voice-status');
+  if (statusEl) { statusEl.textContent = ''; statusEl.classList.remove('speaking'); }
+  const btn = document.getElementById('voice-generate-btn');
+  if (btn) btn.textContent = '▶ GENERATE & PLAY';
+  if (voiceRecording) stopVoiceRec();
+}
+
+// ── RECORD canvas + audio ──
+function toggleVoiceRec() {
+  if (voiceRecording) stopVoiceRec();
+  else startVoiceRec();
+}
+
+function startVoiceRec() {
+  const canvas = document.getElementById('voice-bg-canvas');
+  if (!canvas) { showNotif('⚠️ Start voice first'); return; }
+
+  voiceRecChunks = [];
+
+  // Capture canvas stream
+  const canvasStream = canvas.captureStream(30);
+
+  // Try to capture audio from speech synthesis via AudioContext destination
+  let combinedStream = canvasStream;
+
+  try {
+    const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9' });
+    recorder.ondataavailable = e => { if (e.data.size > 0) voiceRecChunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(voiceRecChunks, { type: 'video/webm' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const sel = document.getElementById('voice-script-select');
+      a.download = 'anter_voice_' + (sel.value || 'script') + '_' + Date.now() + '.webm';
+      a.click();
+      showNotif('✅ VIDEO SAVED TO DEVICE');
+      voiceRecording = false;
+      document.getElementById('voice-rec-btn').textContent = '⏺ START RECORDING';
+      document.getElementById('voice-rec-status').textContent = 'SAVED';
+    };
+    recorder.start();
+    voiceRecorder = recorder;
+    voiceRecording = true;
+    document.getElementById('voice-rec-btn').textContent = '⏹ STOP & SAVE';
+    document.getElementById('voice-rec-status').textContent = '🔴 RECORDING';
+    showNotif('🔴 RECORDING VOICE VIDEO…');
+  } catch(e) {
+    showNotif('⚠️ Recording failed: ' + e.message);
+  }
+}
+
+function stopVoiceRec() {
+  if (voiceRecorder && voiceRecording) {
+    voiceRecorder.stop();
+  }
+  voiceRecording = false;
+}
+
+// ── Init voice panel when switching to it ──
+const _origSwitchTab = switchTab;
+function switchTab(name, el) {
+  _origSwitchTab(name, el);
+  if (name === 'voice') {
+    buildVoicePanel();
+    setTimeout(drawVoiceBgNow, 100);
+  }
+}
+// ══════════════════════════════════════════════════════
 
 </script>
 
