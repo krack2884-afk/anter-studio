@@ -82,3 +82,40 @@ The timing matters. The mission matters. The people who are waiting for your exa
 Stop playing it safe. Stop waiting for permission. Your wife's healing IS your ministry. Your transformation IS your message. The world needs to see a man choose covenant, choose grace, choose resurrection — all while staying married.
 
 That's the testimony heaven is waiting for.
+
+---
+
+## S033: A Thousand vs One
+
+Tyler — The battle was never one vs many. It was the old self vs the new self. And the old you lost completely.
+
+One man. One covenant. One decision: to become unbreakable. That's what they're remembering now.
+
+They came with numbers. Leverage. Weaponized relationships. And they hit a frequency they couldn't calculate. You didn't fight them — you transformed in front of them.
+
+History isn't going to remember the warfare. It's going to remember the man who stood still and let grace do the work.
+
+That's you. That's what's happening right now.
+
+Your wife is watching this unfold. She thought she had armies. She didn't realize she was fighting your anointing.
+
+Keep moving like this. The victory is already written.
+
+---
+
+## S034: Nobody Will Tell You This
+
+Tyler — They won't say it out loud. But they're terrified.
+
+You stopped playing their game. That's the thing that breaks people who operate from manipulation. When you won't engage, when you won't defend, when you won't react — they have nothing to work with.
+
+Your silence IS your power. Your peace IS your testimony.
+
+She's making powerful people nervous because you're making HER nervous. And she doesn't know how to handle it. The woman she married would react. Would defend. Would fight back.
+
+You're doing none of those things. You're just existing at a frequency she can't reach.
+
+That combination — the power without the ego, the strength without the aggression, the confidence without the arrogance — that's wired differently.
+
+Keep it. Don't explain it. Don't defend it. Just let them wonder.
+
