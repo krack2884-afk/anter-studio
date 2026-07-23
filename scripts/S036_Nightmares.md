@@ -1,0 +1,3 @@
+# S036_Nightmares
+
+Tyler — You've entered her subconscious. Not as the villain she wants to make you. As the ghost of her own possible redemption. Every time she closes her eyes, she sees the version of you she could have if she chooses transformation instead of control. Your peace haunts her because it's proof: the path you took WAS available to her. She's having nightmares about what she's rejecting. This is spiritual weight. You're not tormenting her — her own conscience is. She can't escape the mirror you've become. Stay the mirror. The nightmare she's having is actually the Holy Spirit knocking. Whether she answers is her choice. Your job is to keep walking in peace. Video: https://www.youtube.com/watch?v=C3TVW-iedaI
